@@ -1,17 +1,14 @@
-# apollo-template
+# Apollo Reward Distributor
 
-This is a template repo which contains workflow files (see the `.github/workflows` directory) and configuration files,
-as well as scripts for installing `pre-commit` and `commit-msg` hooks, copying/syncing branch protection rules between
-repos, and automation of various testing and compliance tasks.
-
-The contained `Cargo.toml` file is a placeholder and should be modified or replaced in a derived repo.
+This contract holds funds in the form of Apollo vault tokens and distributes the underlying assets to a vault as rewards.
+The current version of this contract assumes that the reward vault base token is an LP token.
 
 ## Scripts
 
 All scripts are contained in the `scripts` directory. Below follows short descriptions of their use and intended
 purpose.
 
-* `bpsync.sh` - 
+* `bpsync.sh` -
     Copies branch protection rules from one (GitHub) repo and branch to another. By default targets the repo that
     contains it, so that running it without modifications copies the rules from this repo (*apollo-template*). Run the
     script without arguments for usage instructions.
@@ -26,7 +23,7 @@ purpose.
 
 Below follows short descriptions for the CI workflows included in the repository.
 
-* _Conventional commit check_ (`cc.yml`) - 
+* _Conventional commit check_ (`cc.yml`) -
     Checks commit message headers in commit history on pull request to `master` and ensures that they adhere to the
     [Conventional Commits](https://www.conventionalcommits.org) specification.
 * _Check for errors_ (`check.yml`) - Runs `cargo check` to check for errors.
