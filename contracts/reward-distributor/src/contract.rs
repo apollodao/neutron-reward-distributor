@@ -119,7 +119,8 @@ mod tests {
         // .unwrap();
 
         // // correct cw2 version info should have been stored
-        // let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
+        // let version =
+        // cw2::get_contract_version(deps.as_ref().storage).unwrap();
         // assert_eq!(
         //     version,
         //     ContractVersion {
@@ -129,7 +130,8 @@ mod tests {
         // );
 
         // // correct ownership info should have been stored
-        // let ownership = cw_ownable::get_ownership(deps.as_ref().storage).unwrap();
+        // let ownership =
+        // cw_ownable::get_ownership(deps.as_ref().storage).unwrap();
         // assert_eq!(
         //     ownership,
         //     Ownership {
