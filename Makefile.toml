@@ -88,7 +88,7 @@ args = [
 
 # This task requires the `cargo-machete` package: https://crates.io/crates/cargo-machete
 [tasks.machete-check]
-toolchain = "${RUST_VERSION}"
+toolchain = "${NIGHTLY_VERSION}"
 command = "cargo"
 args = ["machete"]
 [tasks.machete-fix]
