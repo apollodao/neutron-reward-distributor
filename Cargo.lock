@@ -679,14 +679,12 @@ name = "reward-distributor-contract"
 version = "0.1.0"
 dependencies = [
  "apollo-cw-asset",
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-dex",
  "cw-ownable",
  "cw-vault-standard",
  "cw2 1.1.0",
  "reward-distributor",
- "thiserror",
 ]
 
 [[package]]

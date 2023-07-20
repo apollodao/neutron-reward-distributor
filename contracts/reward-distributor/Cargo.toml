@@ -21,12 +21,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-schema    = { workspace = true }
 cosmwasm-std       = { workspace = true }
 cw2                = { workspace = true }
 cw-ownable         = { workspace = true }
 reward-distributor = { path = "../../packages/reward-distributor" }
-thiserror          = { workspace = true }
 cw-vault-standard  = { workspace = true }
 cw-dex             = { workspace = true, features = ["astroport"] }
 apollo-cw-asset    = { workspace = true }

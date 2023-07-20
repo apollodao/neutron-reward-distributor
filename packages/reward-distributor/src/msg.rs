@@ -22,10 +22,11 @@ pub struct InstantiateMsg {
 #[cw_serde]
 /// The internal message variants that can be called by the contract itself
 pub enum InternalMsg {
-    /// Callback to be called after rewards have been redeemed from the vault to send the underlying
-    /// assets to the distribution address.
+    /// Callback to be called after rewards have been redeemed from the vault to
+    /// send the underlying assets to the distribution address.
     VaultTokensRedeemed {},
-    /// Callback to be called after LP tokens have been redeemed from the vault to send the underlying
+    /// Callback to be called after LP tokens have been redeemed from the vault
+    /// to send the underlying
     LpRedeemed {},
 }
 
@@ -61,11 +62,13 @@ pub enum QueryMsg {
 #[cw_serde]
 /// The config state
 pub struct Config {
-    /// The emission rate per second. This is the amount of tokens to be distributed per second.
+    /// The emission rate per second. This is the amount of tokens to be
+    /// distributed per second.
     pub emission_per_second: Uint128,
     /// The denom of the vault token in which rewards are being held
     pub reward_vt_denom: String,
-    /// The AssetInfo of the LP token in which rewards are being held inside the vault
+    /// The AssetInfo of the LP token in which rewards are being held inside the
+    /// vault
     pub reward_lp_token: AssetInfo,
     /// The dex pool in which rewards are being held
     pub reward_pool: Pool,
@@ -78,11 +81,13 @@ pub struct Config {
 #[cw_serde]
 /// The response to the config query
 pub struct ConfigResponse {
-    /// The emission rate per second. This is the amount of tokens to be distributed per second.
+    /// The emission rate per second. This is the amount of tokens to be
+    /// distributed per second.
     pub emission_per_second: Uint128,
     /// The denom of the vault token in which rewards are being held
     pub reward_vt_denom: String,
-    /// The AssetInfo of the LP token in which rewards are being held inside the vault
+    /// The AssetInfo of the LP token in which rewards are being held inside the
+    /// vault
     pub reward_lp_token: AssetInfo,
     /// The dex pool in which rewards are being held
     pub reward_pool: Pool,
