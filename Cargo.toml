@@ -29,7 +29,13 @@ serde             = "1.0.171"
 schemars          = "0.8.12"
 cw20              = "0.15" # We use outdated cw20 because it's what Astroport uses...
 
+# Repo Packages
 neutron-astroport-reward-distributor = { path = "packages/reward-distributor" }
+
+# Dev Dependencies
+cw-it             = "0.1.3"
+locked-astroport-vault-test-helpers = { git = "https://github.com/apollodao/locked-astroport-vault.git", rev = "6d443599c10f9d037fca710e42db9b9515e7047a" }
+cw-vault-standard-test-helpers = "0.3.3-rc.1"
 
 [profile.release]
 codegen-units    = 1
