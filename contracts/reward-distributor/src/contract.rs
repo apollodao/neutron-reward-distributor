@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use cw_vault_standard::VaultContractUnchecked;
 use reward_distributor::{
-    Config, ConfigResponse, ContractError, ExecuteMsg, InstantiateMsg, InternalMsg, QueryMsg,
+    Config, ConfigUnchecked, ContractError, ExecuteMsg, InstantiateMsg, InternalMsg, QueryMsg,
     CONFIG, LAST_DISTRIBUTED,
 };
 
@@ -32,14 +32,15 @@ pub fn instantiate(
         Err(_) => AssetInfo::Native(vault_info.base_token),
     };
 
-    let config = Config {
-        distribution_addr: deps.api.addr_validate(&msg.distribution_addr)?,
+    let config: Config = ConfigUnchecked {
+        distribution_addr: msg.distribution_addr,
         reward_vault,
         emission_per_second: msg.emission_per_second,
-        reward_lp_token,
+        reward_lp_token: reward_lp_token.into(),
         reward_vt_denom: vault_info.vault_token,
         reward_pool: msg.reward_pool,
-    };
+    }
+    .check(deps.api)?;
 
     CONFIG.save(deps.storage, &config)?;
     LAST_DISTRIBUTED.save(deps.storage, &env.block.time.seconds())?;
@@ -56,10 +57,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::UpdateOwnership(action) => {
-            cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
-            Ok(Response::default())
+            let ownership = cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
+            Ok(Response::default().add_attributes(ownership.into_attributes()))
         }
         ExecuteMsg::Distribute {} => execute::execute_distribute(deps, env),
+        ExecuteMsg::UpdateConfig { updates } => execute::execute_update_config(deps, info, updates),
         ExecuteMsg::Internal(msg) => match msg {
             InternalMsg::VaultTokensRedeemed {} => {
                 execute::execute_internal_vault_tokens_redeemed(deps.as_ref(), env)
@@ -78,14 +80,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         }
         QueryMsg::Config {} => {
             let config = CONFIG.load(deps.storage)?;
-            to_binary(&ConfigResponse {
-                distribution_addr: config.distribution_addr.to_string(),
-                reward_vault_addr: config.reward_vault.addr.to_string(),
-                emission_per_second: config.emission_per_second,
-                reward_lp_token: config.reward_lp_token,
-                reward_pool: config.reward_pool,
-                reward_vt_denom: config.reward_vt_denom,
-            })
+            to_binary(&config)
         }
     }
 }

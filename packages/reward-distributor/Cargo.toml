@@ -20,3 +20,7 @@ thiserror         = { workspace = true }
 cw-dex            = { workspace = true }
 apollo-cw-asset   = { workspace = true }
 cw-vault-standard = { workspace = true }
+cw-address-like   = { workspace = true }
+derive_builder    = { workspace = true }
+serde             = { workspace = true }
+schemars          = { workspace = true }

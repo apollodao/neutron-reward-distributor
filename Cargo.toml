@@ -23,6 +23,10 @@ cw-dex            = "0.3.1"
 cw-storage-plus   = "1.1.0"
 cw-vault-standard = "0.3.1"
 apollo-cw-asset   = "0.1.1"
+cw-address-like   = "1.0.4"
+derive_builder    = "0.12.0"
+serde             = "1.0.171"
+schemars          = "0.8.12"
 
 [profile.release]
 codegen-units    = 1

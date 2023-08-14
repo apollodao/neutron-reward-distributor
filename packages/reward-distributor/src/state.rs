@@ -1,6 +1,6 @@
 use cw_storage_plus::Item;
 
-use crate::msg::Config;
+use crate::config::Config;
 
 /// Stores the contract's config
 pub const CONFIG: Item<Config> = Item::new("config");

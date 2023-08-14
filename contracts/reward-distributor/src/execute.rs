@@ -1,7 +1,7 @@
 use apollo_cw_asset::{Asset, AssetList};
-use cosmwasm_std::{Deps, DepsMut, Env, Response, StdResult, Uint128};
+use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw_dex::traits::Pool as PoolTrait;
-use reward_distributor::{ContractError, InternalMsg, CONFIG, LAST_DISTRIBUTED};
+use reward_distributor::{ConfigUpdates, ContractError, InternalMsg, CONFIG, LAST_DISTRIBUTED};
 
 pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     let last_distributed = LAST_DISTRIBUTED.load(deps.storage)?;
@@ -82,4 +82,21 @@ pub fn execute_internal_lp_redeemed(deps: Deps, env: Env) -> Result<Response, Co
     let send_msgs = pool_asset_balances.transfer_msgs(config.distribution_addr)?;
 
     Ok(Response::default().add_messages(send_msgs))
+}
+
+pub fn execute_update_config(
+    deps: DepsMut,
+    info: MessageInfo,
+    updates: ConfigUpdates,
+) -> Result<Response, ContractError> {
+    // only owner can send this message
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
+    let config = CONFIG.load(deps.storage)?;
+    let updated_config = config.update(deps.api, updates)?;
+
+    // Update config
+    CONFIG.save(deps.storage, &updated_config)?;
+
+    Ok(Response::default())
 }
