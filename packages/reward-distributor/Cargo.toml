@@ -1,6 +1,6 @@
 [package]
-name          = "reward-distributor"
-description   = "Description of the package"
+name          = "neutron-astroport-reward-distributor"
+description   = "Public API for the Neutron Astroport Reward Distributor contract"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

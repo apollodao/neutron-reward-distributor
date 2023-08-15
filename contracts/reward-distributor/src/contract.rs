@@ -1,11 +1,13 @@
-use apollo_cw_asset::AssetInfo;
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    StdError, StdResult, WasmQuery,
 };
-use cw_vault_standard::VaultContractUnchecked;
-use reward_distributor::{
+use cw20::{Cw20QueryMsg, MinterResponse};
+use cw_dex::astroport::AstroportPool;
+use cw_vault_standard::{VaultContract, VaultContractUnchecked};
+use neutron_astroport_reward_distributor::{
     Config, ConfigUnchecked, ContractError, ExecuteMsg, InstantiateMsg, InternalMsg, QueryMsg,
-    CONFIG, LAST_DISTRIBUTED,
+    CONFIG, LAST_DISTRIBUTED, REWARD_POOL, REWARD_VAULT,
 };
 
 use crate::execute;
@@ -23,27 +25,36 @@ pub fn instantiate(
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.owner))?;
 
-    let reward_vault = VaultContractUnchecked::new(&msg.reward_vault_addr).check(deps.api)?;
+    let reward_vault: VaultContract =
+        VaultContractUnchecked::new(&msg.reward_vault_addr).check(deps.as_ref())?;
 
-    // Query vault for vault token and lp token denom
-    let vault_info = reward_vault.query_vault_info(&deps.querier)?;
-    let reward_lp_token = match deps.api.addr_validate(&vault_info.base_token) {
-        Ok(addr) => AssetInfo::Cw20(addr),
-        Err(_) => AssetInfo::Native(vault_info.base_token),
-    };
+    // Validate reward vault base token as CW20 Astroport LP token
+    let reward_lp_token = deps
+        .api
+        .addr_validate(&reward_vault.base_token)
+        .map_err(|_| StdError::generic_err("Invalid base token of reward vault"))?;
 
+    // Query minter of LP token to get reward pool address
+    let minter_res: MinterResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: reward_lp_token.to_string(),
+        msg: to_binary(&Cw20QueryMsg::Minter {})?,
+    }))?;
+    let reward_pool_addr = deps.api.addr_validate(&minter_res.minter)?;
+
+    // Query reward pool for pool info to create pool object
+    let reward_pool = AstroportPool::new(deps.as_ref(), reward_pool_addr)?;
+
+    // Create config
     let config: Config = ConfigUnchecked {
         distribution_addr: msg.distribution_addr,
-        reward_vault,
         emission_per_second: msg.emission_per_second,
-        reward_lp_token: reward_lp_token.into(),
-        reward_vt_denom: vault_info.vault_token,
-        reward_pool: msg.reward_pool,
     }
     .check(deps.api)?;
 
     CONFIG.save(deps.storage, &config)?;
     LAST_DISTRIBUTED.save(deps.storage, &env.block.time.seconds())?;
+    REWARD_POOL.save(deps.storage, &reward_pool)?;
+    REWARD_VAULT.save(deps.storage, &reward_vault)?;
 
     Ok(Response::default())
 }

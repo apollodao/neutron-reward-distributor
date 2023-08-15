@@ -15,9 +15,9 @@ dependencies = [
 
 [[package]]
 name = "apollo-cw-asset"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65e314e0664dc9c096dba582fe1fa599dc556a4091335e40338ef94379ed2bdd"
+checksum = "423502406a307052f6877030f48b5fb4e9fb338fc5e7c8ca1064210def52876b"
 dependencies = [
  "astroport",
  "cosmwasm-std",
@@ -241,9 +241,9 @@ dependencies = [
 
 [[package]]
 name = "cw-dex"
-version = "0.3.1"
+version = "0.4.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b25ff7cf4e15288be9021a797eb1074cfa97ccb2152d1c645ba9b5d6b31a82c"
+checksum = "6f47a1ee3e2d331dfda1c2f0c7752476b6ca3b866bf5dcb75f1a4f30845bc537"
 dependencies = [
  "apollo-cw-asset",
  "apollo-utils",
@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "cw-vault-standard"
-version = "0.3.1"
+version = "0.3.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6fa4a5fff2fbf57eb19b06eb757d21a84933c9526531160ef77b445d8e9d36a"
+checksum = "12a9e148a205aebfb2bf069a5c3756617411c0d8a250f29ec800fa5811090e91"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -684,6 +684,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
 
 [[package]]
+name = "neutron-astroport-reward-distributor"
+version = "0.1.0"
+dependencies = [
+ "apollo-cw-asset",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-address-like",
+ "cw-dex",
+ "cw-ownable",
+ "cw-storage-plus 1.1.0",
+ "cw-vault-standard",
+ "derive_builder",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "neutron-astroport-reward-distributor-contract"
+version = "0.1.0"
+dependencies = [
+ "apollo-cw-asset",
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-ownable",
+ "cw-vault-standard",
+ "cw2 1.1.0",
+ "cw20 0.15.1",
+ "neutron-astroport-reward-distributor",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,37 +768,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
-]
-
-[[package]]
-name = "reward-distributor"
-version = "0.1.0"
-dependencies = [
- "apollo-cw-asset",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-address-like",
- "cw-dex",
- "cw-ownable",
- "cw-storage-plus 1.1.0",
- "cw-vault-standard",
- "derive_builder",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "reward-distributor-contract"
-version = "0.1.0"
-dependencies = [
- "apollo-cw-asset",
- "cosmwasm-std",
- "cw-dex",
- "cw-ownable",
- "cw-vault-standard",
- "cw2 1.1.0",
- "reward-distributor",
 ]
 
 [[package]]

@@ -1,6 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, CosmosMsg, Env, StdResult, Uint128, WasmMsg};
-use cw_dex::Pool;
 use cw_ownable::{cw_ownable_execute, cw_ownable_query};
 
 use crate::{Config, ConfigUpdates};
@@ -11,8 +10,6 @@ pub struct InstantiateMsg {
     pub owner: String,
     /// The emission rate per second
     pub emission_per_second: Uint128,
-    /// The dex pool in which rewards are being held
-    pub reward_pool: Pool,
     /// The address of the vault contract in which rewards are being held
     pub reward_vault_addr: String,
     /// The address that rewards are being distributed to
