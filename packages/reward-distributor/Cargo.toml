@@ -1,0 +1,25 @@
+[package]
+name          = "neutron-astroport-reward-distributor"
+description   = "Public API for the Neutron Astroport Reward Distributor contract"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+homepage      = { workspace = true }
+repository    = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+rust-version  = { workspace = true }
+
+[dependencies]
+cosmwasm-schema   = { workspace = true }
+cw-ownable        = { workspace = true }
+cw-storage-plus   = { workspace = true }
+cosmwasm-std      = { workspace = true }
+thiserror         = { workspace = true }
+cw-dex            = { workspace = true }
+cw-vault-standard = { workspace = true }
+cw-address-like   = { workspace = true }
+derive_builder    = { workspace = true }
+serde             = { workspace = true }
+schemars          = { workspace = true }

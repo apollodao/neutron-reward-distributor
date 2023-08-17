@@ -1,0 +1,2 @@
+# Needed because StdError is at least 144 bytes
+large-error-threshold = 145
