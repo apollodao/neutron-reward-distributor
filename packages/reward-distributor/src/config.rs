@@ -39,7 +39,7 @@ impl Config {
         ConfigUnchecked {
             emission_per_second: updates
                 .emission_per_second
-                .unwrap_or_else(|| self.emission_per_second),
+                .unwrap_or(self.emission_per_second),
             distribution_addr: updates
                 .distribution_addr
                 .unwrap_or_else(|| self.distribution_addr.into()),
