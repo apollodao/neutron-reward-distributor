@@ -9,7 +9,10 @@ vulnerability = "deny"
 unmaintained = "deny"
 notice = "deny"
 unsound = "deny"
-ignore = []
+ignore = [
+    # Only from cosmrs used in dev dependencies. Have asked maintainer of test-tube to bump.
+    "RUSTSEC-2022-0093"
+]
 
 [bans]
 multiple-versions = "allow"
@@ -21,12 +24,31 @@ unknown-registry = "deny"
 unknown-git = "deny"
 allow-git = []
 [sources.allow-org]
-github = []
+github = ["apollodao"]
 
 [licenses]
 unlicensed = "deny"
 copyleft = "deny"
 # We want really high confidence when inferring licenses from text
 confidence-threshold = 0.93
-allow = ["Apache-2.0", "MIT", "BSD-3-Clause", "MPL-2.0"]
-exceptions = [{ allow = ["Unicode-DFS-2016"], name = "unicode-ident" }]
+allow = ["Apache-2.0", "MIT", "BSD-3-Clause", "MPL-2.0", "ISC", "OpenSSL"]
+exceptions = [
+    { allow = ["Unicode-DFS-2016"], name = "unicode-ident" },
+    { allow = ["BUSL-1.1"], name = "locked-astroport-vault"},
+    { allow = ["BUSL-1.1"], name = "locked-astroport-vault-test-helpers"},
+    { allow = ["BUSL-1.1"], name = "neutron-astroport-reward-distributor-contract" }
+]
+
+[[licenses.clarify]]
+name = "webpki"
+expression = "ISC"
+license-files = [
+    { path = "LICENSE", hash = 0x001c7e6c },
+]
+
+[[licenses.clarify]]
+name = "ring"
+expression = "OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]

@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, CosmosMsg, Env, StdResult, Uint128, WasmMsg};
+use cw_dex::astroport::AstroportPool;
 use cw_ownable::{cw_ownable_execute, cw_ownable_query};
+use cw_vault_standard::VaultContract;
 
-use crate::ConfigUpdates;
+use crate::{Config, ConfigUpdates};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -32,7 +34,7 @@ impl InternalMsg {
     pub fn into_cosmos_msg(&self, env: &Env) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
-            msg: to_binary(&self)?,
+            msg: to_binary(&ExecuteMsg::Internal(self.clone()))?,
             funds: vec![],
         }))
     }
@@ -53,7 +55,17 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(crate::Config)]
-    /// Returns the config of the contract
-    Config {},
+    #[returns(StateResponse)]
+    /// Returns the config of the contract as well as non-configurable contract
+    /// state
+    State {},
+}
+
+#[cw_serde]
+/// The response to a config query
+pub struct StateResponse {
+    pub config: Config,
+    pub reward_pool: AstroportPool,
+    pub reward_vault: VaultContract,
+    pub last_distributed: u64,
 }

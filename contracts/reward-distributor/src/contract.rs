@@ -7,7 +7,7 @@ use cw_dex::astroport::AstroportPool;
 use cw_vault_standard::{VaultContract, VaultContractUnchecked};
 use neutron_astroport_reward_distributor::{
     Config, ConfigUnchecked, ContractError, ExecuteMsg, InstantiateMsg, InternalMsg, QueryMsg,
-    CONFIG, LAST_DISTRIBUTED, REWARD_POOL, REWARD_VAULT,
+    StateResponse, CONFIG, LAST_DISTRIBUTED, REWARD_POOL, REWARD_VAULT,
 };
 
 use crate::execute;
@@ -89,9 +89,18 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let ownership = cw_ownable::get_ownership(deps.storage)?;
             to_binary(&ownership)
         }
-        QueryMsg::Config {} => {
+        QueryMsg::State {} => {
             let config = CONFIG.load(deps.storage)?;
-            to_binary(&config)
+            let reward_pool = REWARD_POOL.load(deps.storage)?;
+            let reward_vault = REWARD_VAULT.load(deps.storage)?;
+            let last_distributed = LAST_DISTRIBUTED.load(deps.storage)?;
+
+            to_binary(&StateResponse {
+                config,
+                reward_pool,
+                reward_vault,
+                last_distributed,
+            })
         }
     }
 }
