@@ -102,6 +102,8 @@ toolchain = "${RUST_VERSION}"
 command = "cargo"
 args = [
     "build",
+    "-p",
+    "neutron-astroport-reward-distributor-contract",
     "--target",
     "wasm32-unknown-unknown",
     "--lib",

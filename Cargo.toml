@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts/*"]
+members = ["contracts/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
@@ -31,10 +31,13 @@ cw20              = "0.15" # We use outdated cw20 because it's what Astroport us
 
 # Repo Packages
 neutron-astroport-reward-distributor = { path = "packages/reward-distributor" }
+neutron-astroport-reward-distributor-contract = { path = "contracts/reward-distributor" }
+neutron-astroport-reward-distributor-test-helpers = { path = "packages/test-helpers" }
 
 # Dev Dependencies
-cw-it             = "0.1.3"
-locked-astroport-vault-test-helpers = { git = "https://github.com/apollodao/locked-astroport-vault.git", rev = "6d443599c10f9d037fca710e42db9b9515e7047a" }
+cw-it             = { version = "0.1.3", features = ["astroport-multi-test"] }
+locked-astroport-vault-test-helpers = { git = "https://github.com/apollodao/locked-astroport-vault.git", rev = "b68a2091b8d5a555f0da0a1e2e941071f914256f" }
+# locked-astroport-vault-test-helpers = { path = "../locked-astroport-vault/test-helpers" }
 cw-vault-standard-test-helpers = "0.3.3-rc.1"
 
 [profile.release]

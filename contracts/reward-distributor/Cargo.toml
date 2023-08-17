@@ -4,7 +4,7 @@ description   = "Description of the contract"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
-license       = { workspace = true }
+license       = "BUSL-1.1"
 homepage      = { workspace = true }
 repository    = { workspace = true }
 documentation = { workspace = true }
@@ -33,3 +33,4 @@ neutron-astroport-reward-distributor = { workspace = true }
 [dev-dependencies]
 cw-it                                = { workspace = true, features = ["astroport-multi-test"] }
 locked-astroport-vault-test-helpers  = { workspace = true }
+neutron-astroport-reward-distributor-test-helpers = { workspace = true }

@@ -1,0 +1,23 @@
+[package]
+name = "neutron-astroport-reward-distributor-test-helpers"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+homepage      = { workspace = true }
+repository    = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+rust-version  = { workspace = true }
+
+
+[features]
+osmosis-test-tube = ["cw-it/osmosis-test-tube"]
+
+[dependencies]
+cosmwasm-std                                  = { workspace = true }
+cw-dex                                        = { workspace = true }
+cw-it                                         = { workspace = true }
+locked-astroport-vault-test-helpers           = { workspace = true }
+neutron-astroport-reward-distributor          = { workspace = true }
+neutron-astroport-reward-distributor-contract = { workspace = true }
