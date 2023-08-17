@@ -1,7 +1,7 @@
-# Apollo Reward Distributor
+# Neutron Astroport Reward Distributor
 
-This contract holds funds in the form of Apollo vault tokens and distributes the underlying assets to a vault as rewards.
-The current version of this contract assumes that the reward vault base token is an LP token.
+This contract holds funds in the form of vault tokens and distributes the underlying assets to an address as rewards.
+The current version of this contract assumes that the reward vault base token is an Astroport LP token.
 
 ## Scripts
 

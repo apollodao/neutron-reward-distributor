@@ -1,7 +1,8 @@
 use common::get_test_runner;
 use cosmwasm_std::{coin, Uint128};
+use cw_it::robot::TestRobot;
+use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
-use cw_it::{robot::TestRobot, test_tube::Account};
 
 use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
