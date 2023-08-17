@@ -34,7 +34,7 @@ impl InternalMsg {
     pub fn into_cosmos_msg(&self, env: &Env) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
-            msg: to_binary(&self)?,
+            msg: to_binary(&ExecuteMsg::Internal(self.clone()))?,
             funds: vec![],
         }))
     }

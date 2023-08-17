@@ -5,6 +5,7 @@ use cw_dex::astroport::AstroportPool;
 use cw_it::astroport::robot::AstroportTestRobot;
 use cw_it::astroport::utils::AstroportContracts;
 use cw_it::cw_multi_test::ContractWrapper;
+use cw_it::osmosis_std::types::cosmos::bank::v1beta1::QueryAllBalancesRequest;
 use cw_it::robot::TestRobot;
 use cw_it::test_tube::{Account, Module, SigningAccount, Wasm};
 use cw_it::traits::CwItRunner;
@@ -28,7 +29,7 @@ pub const DEFAULT_COINS: &str =
     "1000000000000000000uosmo,1000000000000000000untrn,1000000000000000000uaxl,1000000000000000000uastro";
 
 /// The default liquidity for the reward pool
-pub const DEFAULT_LIQ: &str = "1000000000untrn,1000000000uaxlr"; // 1K NTRN, 1K AXLR
+pub const DEFAULT_LIQ: &str = "1000000000untrn,1000000000uaxl"; // 1K NTRN, 1K AXL
 
 /// A helper struct implementing the Robot testing pattern for testing the
 /// reward distributor contract.
@@ -77,7 +78,7 @@ impl<'a> RewardDistributorRobot<'a> {
         vault_dependencies: &'a LockedVaultDependencies<'a>,
         dependency_artifacts_dir: &str,
         artifacts_dir: &str,
-        treasury_addr: String,
+        vault_treasury_addr: String,
         admin: &'a SigningAccount,
         emission_per_second: impl Into<Uint128>,
     ) -> Self {
@@ -87,7 +88,7 @@ impl<'a> RewardDistributorRobot<'a> {
                 runner,
                 LockedAstroportVaultRobot::contract(runner, dependency_artifacts_dir),
                 Coin::from_str(DENOM_CREATION_FEE).unwrap(),
-                treasury_addr,
+                vault_treasury_addr,
                 vault_dependencies,
                 admin,
             );
@@ -118,11 +119,63 @@ impl<'a> RewardDistributorRobot<'a> {
         }
     }
 
+    pub fn distribute(&self, signer: &SigningAccount) -> &Self {
+        let msg = reward_distributor::msg::ExecuteMsg::Distribute {};
+        self.wasm()
+            .execute(&self.reward_distributor_addr, &msg, &[], signer)
+            .unwrap();
+        self
+    }
+
+    pub fn increase_time(&self, seconds: u64) -> &Self {
+        self.runner.increase_time(seconds).unwrap();
+        self
+    }
+
     pub fn query_state(&self) -> reward_distributor::msg::StateResponse {
         let query_msg = reward_distributor::msg::QueryMsg::State {};
         self.wasm()
             .query(&self.reward_distributor_addr, &query_msg)
             .unwrap()
+    }
+
+    pub fn query_distribution_acc_balances(&self) -> Vec<Coin> {
+        // self.query_balances(&self.distribution_acc.address())
+        self.bank()
+            .query_all_balances(&QueryAllBalancesRequest {
+                address: self.distribution_acc.address(),
+                ..Default::default()
+            })
+            .unwrap()
+            .balances
+            .into_iter()
+            .map(|b| Coin {
+                denom: b.denom,
+                amount: Uint128::from_str(&b.amount).unwrap(),
+            })
+            .collect()
+    }
+
+    pub fn assert_distribution_acc_balances_eq(&self, expected: &[Coin]) -> &Self {
+        assert_eq!(
+            self.query_distribution_acc_balances(),
+            expected,
+            "Distribution account balances do not match"
+        );
+        self
+    }
+
+    pub fn assert_distribution_acc_balances_gt(&self, expected: &[Coin]) -> &Self {
+        let actual = self.query_distribution_acc_balances();
+        for (i, coin) in expected.iter().enumerate() {
+            assert!(
+                actual[i].amount > coin.amount,
+                "Distribution account balance {} is not greater than {}",
+                actual[i].amount,
+                coin.amount
+            );
+        }
+        self
     }
 }
 
