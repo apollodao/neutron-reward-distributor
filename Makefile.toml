@@ -119,6 +119,7 @@ args = [
 
 # Run integration tests
 [tasks.integration-test]
+cwd = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 dependencies = ["wasm"]
 toolchain = "${RUST_VERSION}"
 command = "cargo"
