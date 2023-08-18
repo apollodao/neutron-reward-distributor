@@ -73,12 +73,21 @@ pub fn execute(
         }
         ExecuteMsg::Distribute {} => execute::execute_distribute(deps, env),
         ExecuteMsg::UpdateConfig { updates } => execute::execute_update_config(deps, info, updates),
-        ExecuteMsg::Internal(msg) => match msg {
-            InternalMsg::VaultTokensRedeemed {} => {
-                execute::execute_internal_vault_tokens_redeemed(deps.as_ref(), env)
+        ExecuteMsg::Internal(msg) => {
+            // Internal messages can only be called by the contract itself
+            if info.sender != env.contract.address {
+                return Err(ContractError::Unauthorized {});
             }
-            InternalMsg::LpRedeemed {} => execute::execute_internal_lp_redeemed(deps.as_ref(), env),
-        },
+
+            match msg {
+                InternalMsg::VaultTokensRedeemed {} => {
+                    execute::execute_internal_vault_tokens_redeemed(deps.as_ref(), env)
+                }
+                InternalMsg::LpRedeemed {} => {
+                    execute::execute_internal_lp_redeemed(deps.as_ref(), env)
+                }
+            }
+        }
     }
 }
 
