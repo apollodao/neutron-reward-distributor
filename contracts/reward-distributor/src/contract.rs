@@ -18,7 +18,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
@@ -48,11 +48,12 @@ pub fn instantiate(
     let config: Config = ConfigUnchecked {
         distribution_addr: msg.distribution_addr,
         emission_per_second: msg.emission_per_second,
+        rewards_start_time: msg.rewards_start_time,
     }
     .check(deps.api)?;
 
     CONFIG.save(deps.storage, &config)?;
-    LAST_DISTRIBUTED.save(deps.storage, &env.block.time.seconds())?;
+    LAST_DISTRIBUTED.save(deps.storage, &msg.rewards_start_time)?;
     REWARD_POOL.save(deps.storage, &reward_pool)?;
     REWARD_VAULT.save(deps.storage, &reward_vault)?;
 
@@ -73,12 +74,21 @@ pub fn execute(
         }
         ExecuteMsg::Distribute {} => execute::execute_distribute(deps, env),
         ExecuteMsg::UpdateConfig { updates } => execute::execute_update_config(deps, info, updates),
-        ExecuteMsg::Internal(msg) => match msg {
-            InternalMsg::VaultTokensRedeemed {} => {
-                execute::execute_internal_vault_tokens_redeemed(deps.as_ref(), env)
+        ExecuteMsg::Internal(msg) => {
+            // Internal messages can only be called by the contract itself
+            if info.sender != env.contract.address {
+                return Err(ContractError::Unauthorized {});
             }
-            InternalMsg::LpRedeemed {} => execute::execute_internal_lp_redeemed(deps.as_ref(), env),
-        },
+
+            match msg {
+                InternalMsg::VaultTokensRedeemed {} => {
+                    execute::execute_internal_vault_tokens_redeemed(deps.as_ref(), env)
+                }
+                InternalMsg::LpRedeemed {} => {
+                    execute::execute_internal_lp_redeemed(deps.as_ref(), env)
+                }
+            }
+        }
     }
 }
 

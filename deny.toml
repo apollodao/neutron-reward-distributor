@@ -11,7 +11,10 @@ notice = "deny"
 unsound = "deny"
 ignore = [
     # Only from cosmrs used in dev dependencies. Have asked maintainer of test-tube to bump.
-    "RUSTSEC-2022-0093"
+    "RUSTSEC-2022-0093",
+
+    # Only from cosmrs used in dev dependencies and only applicable to windows.
+    "RUSTSEC-2021-0145"
 ]
 
 [bans]

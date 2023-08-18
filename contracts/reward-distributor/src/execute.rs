@@ -1,5 +1,5 @@
 use apollo_cw_asset::{Asset, AssetInfo, AssetList};
-use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{Deps, DepsMut, Env, Event, MessageInfo, Response, Uint128};
 use cw_dex::traits::Pool as PoolTrait;
 use neutron_astroport_reward_distributor::{
     ConfigUpdates, ContractError, InternalMsg, CONFIG, LAST_DISTRIBUTED, REWARD_POOL, REWARD_VAULT,
@@ -10,9 +10,17 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
     let config = CONFIG.load(deps.storage)?;
     let current_time = env.block.time.seconds();
 
+    // Only distribute if rewards start time has passed
+    if current_time < config.rewards_start_time {
+        return Err(ContractError::RewardsNotStarted {
+            current_time,
+            start_time: config.rewards_start_time,
+        });
+    }
+
     // Only distribute once per block
     if current_time == last_distributed {
-        return Ok(Response::default());
+        return Err(ContractError::CanOnlyDistributeOncePerBlock {});
     }
 
     // Calculate amount of rewards to be distributed
@@ -24,19 +32,36 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
 
     // Only distribute if there are rewards to be distributed
     if redeem_amount.is_zero() {
-        return Ok(Response::default());
+        return Err(ContractError::NoRewardsToDistribute {});
+    }
+
+    // Check contract's balance of vault tokens and error if not enough. This is
+    // just so we get a clearer error message rather than the confusing "cannot
+    // sub 0 with x".
+    let reward_vault = REWARD_VAULT.load(deps.storage)?;
+    let vault_token_balance = deps
+        .querier
+        .query_balance(&env.contract.address, &reward_vault.vault_token)?;
+    if vault_token_balance.amount < redeem_amount {
+        return Err(ContractError::InsufficientVaultTokenBalance {
+            vault_token_balance: vault_token_balance.amount,
+            redeem_amount,
+        });
     }
 
     // Redeem rewards from the vault
-    let reward_vault = REWARD_VAULT.load(deps.storage)?;
     let redeem_msg = reward_vault.redeem(redeem_amount, None)?;
 
     // Create internal callback msg
     let callback_msg = InternalMsg::VaultTokensRedeemed {}.into_cosmos_msg(&env)?;
 
+    let event = Event::new("apollo/neutron-astroport-reward-distributor/execute_distribute")
+        .add_attribute("vault_tokens_redeemed", redeem_amount);
+
     Ok(Response::default()
         .add_message(redeem_msg)
-        .add_message(callback_msg))
+        .add_message(callback_msg)
+        .add_event(event))
 }
 
 pub fn execute_internal_vault_tokens_redeemed(
@@ -56,7 +81,12 @@ pub fn execute_internal_vault_tokens_redeemed(
     // Create internal callback msg
     let callback_msg = InternalMsg::LpRedeemed {}.into_cosmos_msg(&env)?;
 
-    Ok(withdraw_res.add_message(callback_msg))
+    let event = Event::new(
+        "apollo/neutron-astroport-reward-distributor/execute_internal_vault_tokens_redeemed",
+    )
+    .add_attribute("lp_tokens_redeemed", lp_balance);
+
+    Ok(withdraw_res.add_message(callback_msg).add_event(event))
 }
 
 pub fn execute_internal_lp_redeemed(deps: Deps, env: Env) -> Result<Response, ContractError> {
@@ -73,7 +103,14 @@ pub fn execute_internal_lp_redeemed(deps: Deps, env: Env) -> Result<Response, Co
     // Create msg to send assets to distribution address
     let send_msgs = pool_asset_balances.transfer_msgs(config.distribution_addr)?;
 
-    Ok(Response::default().add_messages(send_msgs))
+    let mut event = Event::new(
+        "apollo/neutron-astroport-reward-distributor/execute_internal_vault_tokens_redeemed",
+    );
+    for asset in pool_asset_balances.iter() {
+        event = event.add_attribute("asset_distributed", asset.to_string());
+    }
+
+    Ok(Response::default().add_messages(send_msgs).add_event(event))
 }
 
 pub fn execute_update_config(
@@ -90,5 +127,9 @@ pub fn execute_update_config(
     // Update config
     CONFIG.save(deps.storage, &updated_config)?;
 
-    Ok(Response::default())
+    let event = Event::new("apollo/neutron-astroport-reward-distributor/execute_update_config")
+        .add_attribute("old_config", format!("{:?}", config))
+        .add_attribute("new_config", format!("{:?}", updated_config));
+
+    Ok(Response::default().add_event(event))
 }
