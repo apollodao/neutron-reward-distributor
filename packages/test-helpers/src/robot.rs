@@ -76,6 +76,7 @@ impl<'a> RewardDistributorRobot<'a> {
 
     /// Uploads and instantiates the reward distributor contract as well as all
     /// dependencies. Returns an instance of the default testing robot.
+    #[allow(clippy::too_many_arguments)]
     pub fn instantiate(
         runner: &'a TestRunner,
         vault_dependencies: &'a LockedVaultDependencies<'a>,
@@ -130,10 +131,10 @@ impl<'a> RewardDistributorRobot<'a> {
         signer: &SigningAccount,
     ) -> &Self {
         self.reward_vault_robot
-            .deposit_cw20(base_token_amount, None, &signer)
+            .deposit_cw20(base_token_amount, None, signer)
             .assert_vault_token_balance_eq(signer.address(), base_token_amount)
             .send_native_tokens(
-                &signer,
+                signer,
                 &self.reward_distributor_addr,
                 base_token_amount,
                 &self.reward_vault_robot.vault_token(),
@@ -141,8 +142,8 @@ impl<'a> RewardDistributorRobot<'a> {
         self
     }
 
-    /// Calls `ExecuteMsg::Distribute` on the reward distributor contract to distribute rewards to
-    /// the distribution address.
+    /// Calls `ExecuteMsg::Distribute` on the reward distributor contract to
+    /// distribute rewards to the distribution address.
     pub fn distribute(&self, unwrap_choice: Unwrap, signer: &SigningAccount) -> &Self {
         let msg = reward_distributor::msg::ExecuteMsg::Distribute {};
         unwrap_choice.unwrap(
@@ -218,7 +219,8 @@ impl<'a> RewardDistributorRobot<'a> {
 
     // Assertions //
 
-    /// Asserts that the distribution account's native token balances are equal to the given coins
+    /// Asserts that the distribution account's native token balances are equal
+    /// to the given coins
     pub fn assert_distribution_acc_balances_eq(&self, expected: &[Coin]) -> &Self {
         assert_eq!(
             self.query_distribution_acc_balances(),
@@ -228,8 +230,8 @@ impl<'a> RewardDistributorRobot<'a> {
         self
     }
 
-    /// Asserts that the distribution account's native token balances are greater than the given
-    /// coins
+    /// Asserts that the distribution account's native token balances are
+    /// greater than the given coins
     pub fn assert_distribution_acc_balances_gt(&self, expected: &[Coin]) -> &Self {
         let actual = self.query_distribution_acc_balances();
         for (i, coin) in expected.iter().enumerate() {

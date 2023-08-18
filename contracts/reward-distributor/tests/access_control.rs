@@ -40,7 +40,8 @@ fn update_ownership_can_only_be_called_by_admin() {
         expiry: None,
     };
 
-    // Try calling update_ownership as non-admin, should fail. Then try calling as admin, should work.
+    // Try calling update_ownership as non-admin, should fail. Then try calling as
+    // admin, should work.
     robot
         .update_ownership(
             action.clone(),
@@ -74,7 +75,8 @@ fn update_config_can_only_be_called_by_admin() {
     let mut config_updates = ConfigUpdates::default();
     config_updates.emission_per_second(Uint128::new(420));
 
-    // Try calling update_config as non-admin, should fail. Then try calling as admin, should work.
+    // Try calling update_config as non-admin, should fail. Then try calling as
+    // admin, should work.
     robot
         .update_config(
             config_updates.clone(),

@@ -3,10 +3,9 @@ use cosmwasm_std::{coin, Uint128};
 use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
 
+use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
+use locked_astroport_vault_test_helpers::helpers::Unwrap;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
-use locked_astroport_vault_test_helpers::{
-    cw_vault_standard_test_helpers::traits::CwVaultStandardRobot, helpers::Unwrap,
-};
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
 use test_helpers::robot::RewardDistributorRobot;
@@ -128,7 +127,8 @@ fn distribute_errors_when_not_enough_vault_tokens_in_contract() {
     // Try to distribute rewards, should fail
     robot.distribute(Unwrap::Err("Insufficient vault token balance"), &admin);
 
-    // Deposit to vault and donate vault tokens to reward distributor and try to distribute again. Should work.
+    // Deposit to vault and donate vault tokens to reward distributor and try to
+    // distribute again. Should work.
     let deposit_amount = Uint128::new(10000000u128);
     robot
         .deposit_to_distributor(deposit_amount, &admin)
@@ -172,11 +172,14 @@ fn test_correct_distribute() {
         .increase_time(time_elapsed)
         .distribute(Unwrap::Ok, &admin)
         .assert_distribution_acc_balances_eq(&[
-            coin(emission_per_second * time_elapsed as u128 - 1, "uaxl"), // 1 unit lost to rounding
-            coin(emission_per_second * time_elapsed as u128 - 1, "untrn"), // 1 unit lost to rounding
+            coin(emission_per_second * time_elapsed as u128 - 1, "uaxl"), /* 1 unit lost to
+                                                                           * rounding */
+            coin(emission_per_second * time_elapsed as u128 - 1, "untrn"), /* 1 unit lost to
+                                                                            * rounding */
         ]);
 
-    // Vault token balance of reward distributor should have decreased with the amount distributed
+    // Vault token balance of reward distributor should have decreased with the
+    // amount distributed
     vault_robot.assert_vault_token_balance_eq(
         robot.reward_distributor_addr,
         deposit_amount.u128() - emission_per_second * time_elapsed as u128,

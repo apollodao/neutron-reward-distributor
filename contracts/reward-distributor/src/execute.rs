@@ -35,8 +35,9 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
         return Err(ContractError::NoRewardsToDistribute {});
     }
 
-    // Check contract's balance of vault tokens and error if not enough. This is just so we get a
-    // clearer error message rather than the confusing "cannot sub 0 with x".
+    // Check contract's balance of vault tokens and error if not enough. This is
+    // just so we get a clearer error message rather than the confusing "cannot
+    // sub 0 with x".
     let reward_vault = REWARD_VAULT.load(deps.storage)?;
     let vault_token_balance = deps
         .querier
