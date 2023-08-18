@@ -10,6 +10,14 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
     let config = CONFIG.load(deps.storage)?;
     let current_time = env.block.time.seconds();
 
+    // Only distribute if rewards start time has passed
+    if current_time < config.rewards_start_time {
+        return Err(ContractError::RewardsNotStarted {
+            current_time,
+            start_time: config.rewards_start_time,
+        });
+    }
+
     // Only distribute once per block
     if current_time == last_distributed {
         return Err(ContractError::CanOnlyDistributeOncePerBlock {});
@@ -27,8 +35,20 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
         return Err(ContractError::NoRewardsToDistribute {});
     }
 
-    // Redeem rewards from the vault
+    // Check contract's balance of vault tokens and error if not enough. This is just so we get a
+    // clearer error message rather than the confusing "cannot sub 0 with x".
     let reward_vault = REWARD_VAULT.load(deps.storage)?;
+    let vault_token_balance = deps
+        .querier
+        .query_balance(&env.contract.address, &reward_vault.vault_token)?;
+    if vault_token_balance.amount < redeem_amount {
+        return Err(ContractError::InsufficientVaultTokenBalance {
+            vault_token_balance: vault_token_balance.amount,
+            redeem_amount,
+        });
+    }
+
+    // Redeem rewards from the vault
     let redeem_msg = reward_vault.redeem(redeem_amount, None)?;
 
     // Create internal callback msg

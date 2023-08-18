@@ -10,6 +10,7 @@ use cw_it::robot::TestRobot;
 use cw_it::test_tube::{Account, Module, SigningAccount, Wasm};
 use cw_it::traits::CwItRunner;
 use cw_it::{ContractType, TestRunner};
+use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::helpers::Unwrap;
 use locked_astroport_vault_test_helpers::robot::{
     LockedAstroportVaultRobot, LockedVaultDependencies,
@@ -83,6 +84,7 @@ impl<'a> RewardDistributorRobot<'a> {
         vault_treasury_addr: String,
         admin: &'a SigningAccount,
         emission_per_second: impl Into<Uint128>,
+        rewards_start_time: u64,
     ) -> Self {
         // Create vault for reward pool
         let (reward_vault_robot, axl_ntrn_pool, _astro_ntrn_pool) =
@@ -104,6 +106,7 @@ impl<'a> RewardDistributorRobot<'a> {
             emission_per_second: emission_per_second.into(),
             owner: admin.address(),
             reward_vault_addr: reward_vault_robot.vault_addr.clone(),
+            rewards_start_time,
         };
         let contract_addr = Wasm::new(runner)
             .instantiate(code_id, &msg, Some(&admin.address()), None, &[], admin)
@@ -119,6 +122,23 @@ impl<'a> RewardDistributorRobot<'a> {
             reward_pool: axl_ntrn_pool,
             reward_vault_robot,
         }
+    }
+
+    pub fn deposit_to_distributor(
+        &self,
+        base_token_amount: Uint128,
+        signer: &SigningAccount,
+    ) -> &Self {
+        self.reward_vault_robot
+            .deposit_cw20(base_token_amount, None, &signer)
+            .assert_vault_token_balance_eq(signer.address(), base_token_amount)
+            .send_native_tokens(
+                &signer,
+                &self.reward_distributor_addr,
+                base_token_amount,
+                &self.reward_vault_robot.vault_token(),
+            );
+        self
     }
 
     /// Calls `ExecuteMsg::Distribute` on the reward distributor contract to distribute rewards to

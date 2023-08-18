@@ -22,6 +22,7 @@ fn update_ownership_can_only_be_called_by_admin() {
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
     let emission_per_second = 100u128;
+    let rewards_start_time = runner.query_block_time_nanos() / 1_000_000_000;
     let robot = RewardDistributorRobot::instantiate(
         &runner,
         &dependencies,
@@ -30,6 +31,7 @@ fn update_ownership_can_only_be_called_by_admin() {
         treasury_addr.address(),
         &admin,
         emission_per_second,
+        rewards_start_time,
     );
 
     let user = runner.init_default_account().unwrap();
@@ -55,6 +57,7 @@ fn update_config_can_only_be_called_by_admin() {
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
     let emission_per_second = 100u128;
+    let rewards_start_time = runner.query_block_time_nanos() / 1_000_000_000;
     let robot = RewardDistributorRobot::instantiate(
         &runner,
         &dependencies,
@@ -63,6 +66,7 @@ fn update_config_can_only_be_called_by_admin() {
         treasury_addr.address(),
         &admin,
         emission_per_second,
+        rewards_start_time,
     );
 
     let user = runner.init_default_account().unwrap();
@@ -87,6 +91,7 @@ fn internal_msg_can_only_be_called_by_contract() {
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
     let emission_per_second = 100u128;
+    let rewards_start_time = runner.query_block_time_nanos() / 1_000_000_000;
     let robot = RewardDistributorRobot::instantiate(
         &runner,
         &dependencies,
@@ -95,6 +100,7 @@ fn internal_msg_can_only_be_called_by_contract() {
         treasury_addr.address(),
         &admin,
         emission_per_second,
+        rewards_start_time,
     );
 
     let err = robot

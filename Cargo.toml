@@ -36,7 +36,7 @@ neutron-astroport-reward-distributor-test-helpers = { path = "packages/test-help
 
 # Dev Dependencies
 cw-it             = { version = "0.1.3", features = ["astroport-multi-test"] }
-locked-astroport-vault-test-helpers = { git = "https://github.com/apollodao/locked-astroport-vault.git", rev = "b68a2091b8d5a555f0da0a1e2e941071f914256f" }
+locked-astroport-vault-test-helpers = "0.1.0-rc.1"
 # locked-astroport-vault-test-helpers = { path = "../locked-astroport-vault/test-helpers" }
 cw-vault-standard-test-helpers = "0.3.3-rc.1"
 

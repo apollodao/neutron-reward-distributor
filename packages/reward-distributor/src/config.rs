@@ -15,6 +15,8 @@ pub struct ConfigBase<T: AddressLike> {
     pub emission_per_second: Uint128,
     /// The address that rewards are being distributed to
     pub distribution_addr: T,
+    /// The unix timestamp at which rewards start being distributed
+    pub rewards_start_time: u64,
 }
 
 pub type ConfigUnchecked = ConfigBase<String>;
@@ -27,6 +29,7 @@ impl ConfigUnchecked {
         Ok(Config {
             emission_per_second: self.emission_per_second,
             distribution_addr: api.addr_validate(&self.distribution_addr)?,
+            rewards_start_time: self.rewards_start_time,
         })
     }
 }
@@ -43,6 +46,9 @@ impl Config {
             distribution_addr: updates
                 .distribution_addr
                 .unwrap_or_else(|| self.distribution_addr.clone().into()),
+            rewards_start_time: updates
+                .rewards_start_time
+                .unwrap_or(self.rewards_start_time),
         }
         .check(api)
     }

@@ -16,6 +16,8 @@ pub struct InstantiateMsg {
     pub reward_vault_addr: String,
     /// The address that rewards are being distributed to
     pub distribution_addr: String,
+    /// The unix timestamp at which rewards start being distributed
+    pub rewards_start_time: u64,
 }
 
 #[cw_serde]
