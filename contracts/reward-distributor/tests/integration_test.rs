@@ -4,8 +4,10 @@ use cw_it::robot::TestRobot;
 use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
 
-use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
+use locked_astroport_vault_test_helpers::{
+    cw_vault_standard_test_helpers::traits::CwVaultStandardRobot, helpers::Unwrap,
+};
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
 use test_helpers::robot::RewardDistributorRobot;
@@ -48,6 +50,29 @@ fn test_initialization() {
 }
 
 #[test]
+fn distribute_errors_on_no_rewards_to_distribute() {
+    let runner = get_test_runner();
+    let admin = RewardDistributorRobot::default_account(&runner);
+    let treasury_addr = runner.init_account(&[]).unwrap();
+    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
+    let emission_per_second = 0u128;
+    let robot = RewardDistributorRobot::instantiate(
+        &runner,
+        &dependencies,
+        DEPS_PATH,
+        UNOPTIMIZED_PATH,
+        treasury_addr.address(),
+        &admin,
+        emission_per_second,
+    );
+
+    robot
+        .distribute(Unwrap::Err("Can only distribute once per block"), &admin)
+        .increase_time(5)
+        .distribute(Unwrap::Err("No rewards to distribute"), &admin);
+}
+
+#[test]
 fn test_distribute() {
     let runner = get_test_runner();
     let admin = RewardDistributorRobot::default_account(&runner);
@@ -84,12 +109,18 @@ fn test_distribute() {
     let time_elapsed = 1000u64;
     robot
         .assert_distribution_acc_balances_eq(&[])
-        .distribute(&admin)
+        .distribute(Unwrap::Err("Can only distribute once per block"), &admin)
         .assert_distribution_acc_balances_eq(&[])
         .increase_time(time_elapsed)
-        .distribute(&admin)
+        .distribute(Unwrap::Ok, &admin)
         .assert_distribution_acc_balances_eq(&[
             coin(emission_per_second * time_elapsed as u128 - 1, "uaxl"),
             coin(emission_per_second * time_elapsed as u128 - 1, "untrn"),
         ]);
+
+    // Vault token balance of reward distributor should have decreased with the amount distributed
+    vault_robot.assert_vault_token_balance_eq(
+        robot.reward_distributor_addr,
+        deposit_amount.u128() - emission_per_second * time_elapsed as u128,
+    );
 }

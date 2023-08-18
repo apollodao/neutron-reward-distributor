@@ -12,7 +12,7 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
 
     // Only distribute once per block
     if current_time == last_distributed {
-        return Ok(Response::default());
+        return Err(ContractError::CanOnlyDistributeOncePerBlock {});
     }
 
     // Calculate amount of rewards to be distributed
@@ -24,7 +24,7 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
 
     // Only distribute if there are rewards to be distributed
     if redeem_amount.is_zero() {
-        return Ok(Response::default());
+        return Err(ContractError::NoRewardsToDistribute {});
     }
 
     // Redeem rewards from the vault

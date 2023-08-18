@@ -14,4 +14,10 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("No rewards to distribute")]
+    NoRewardsToDistribute {},
+
+    #[error("Can only distribute once per block")]
+    CanOnlyDistributeOncePerBlock {},
 }

@@ -123,11 +123,12 @@ impl<'a> RewardDistributorRobot<'a> {
 
     /// Calls `ExecuteMsg::Distribute` on the reward distributor contract to distribute rewards to
     /// the distribution address.
-    pub fn distribute(&self, signer: &SigningAccount) -> &Self {
+    pub fn distribute(&self, unwrap_choice: Unwrap, signer: &SigningAccount) -> &Self {
         let msg = reward_distributor::msg::ExecuteMsg::Distribute {};
-        self.wasm()
-            .execute(&self.reward_distributor_addr, &msg, &[], signer)
-            .unwrap();
+        unwrap_choice.unwrap(
+            self.wasm()
+                .execute(&self.reward_distributor_addr, &msg, &[], signer),
+        );
         self
     }
 
