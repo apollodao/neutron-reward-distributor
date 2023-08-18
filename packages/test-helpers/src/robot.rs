@@ -10,6 +10,7 @@ use cw_it::robot::TestRobot;
 use cw_it::test_tube::{Account, Module, SigningAccount, Wasm};
 use cw_it::traits::CwItRunner;
 use cw_it::{ContractType, TestRunner};
+use locked_astroport_vault_test_helpers::helpers::Unwrap;
 use locked_astroport_vault_test_helpers::robot::{
     LockedAstroportVaultRobot, LockedVaultDependencies,
 };
@@ -18,6 +19,7 @@ use neutron_astroport_reward_distributor::InstantiateMsg;
 
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
+use reward_distributor::ConfigUpdates;
 
 pub const REWARD_DISTRIBUTOR_WASM_NAME: &str = "neutron_astroport_reward_distributor_contract.wasm";
 
@@ -119,6 +121,8 @@ impl<'a> RewardDistributorRobot<'a> {
         }
     }
 
+    /// Calls `ExecuteMsg::Distribute` on the reward distributor contract to distribute rewards to
+    /// the distribution address.
     pub fn distribute(&self, signer: &SigningAccount) -> &Self {
         let msg = reward_distributor::msg::ExecuteMsg::Distribute {};
         self.wasm()
@@ -127,11 +131,45 @@ impl<'a> RewardDistributorRobot<'a> {
         self
     }
 
+    /// Increases the test runner's block time by the given number of seconds
     pub fn increase_time(&self, seconds: u64) -> &Self {
         self.runner.increase_time(seconds).unwrap();
         self
     }
 
+    /// Updates the contract's config
+    pub fn update_config(
+        &self,
+        updates: ConfigUpdates,
+        unwrap_choice: Unwrap,
+        signer: &SigningAccount,
+    ) -> &Self {
+        let msg = reward_distributor::msg::ExecuteMsg::UpdateConfig { updates };
+        unwrap_choice.unwrap(
+            self.wasm()
+                .execute(&self.reward_distributor_addr, &msg, &[], signer),
+        );
+        self
+    }
+
+    /// Updates the contract's ownership
+    pub fn update_ownership(
+        &self,
+        action: cw_ownable::Action,
+        unwrap_choice: Unwrap,
+        signer: &SigningAccount,
+    ) -> &Self {
+        let msg = reward_distributor::msg::ExecuteMsg::UpdateOwnership(action);
+        unwrap_choice.unwrap(
+            self.wasm()
+                .execute(&self.reward_distributor_addr, &msg, &[], signer),
+        );
+        self
+    }
+
+    // Queries //
+
+    /// Queries the reward distributor contract for its state
     pub fn query_state(&self) -> reward_distributor::msg::StateResponse {
         let query_msg = reward_distributor::msg::QueryMsg::State {};
         self.wasm()
@@ -139,6 +177,7 @@ impl<'a> RewardDistributorRobot<'a> {
             .unwrap()
     }
 
+    /// Queries the distribution account for its native token balances
     pub fn query_distribution_acc_balances(&self) -> Vec<Coin> {
         // self.query_balances(&self.distribution_acc.address())
         self.bank()
@@ -156,6 +195,9 @@ impl<'a> RewardDistributorRobot<'a> {
             .collect()
     }
 
+    // Assertions //
+
+    /// Asserts that the distribution account's native token balances are equal to the given coins
     pub fn assert_distribution_acc_balances_eq(&self, expected: &[Coin]) -> &Self {
         assert_eq!(
             self.query_distribution_acc_balances(),
@@ -165,6 +207,8 @@ impl<'a> RewardDistributorRobot<'a> {
         self
     }
 
+    /// Asserts that the distribution account's native token balances are greater than the given
+    /// coins
     pub fn assert_distribution_acc_balances_gt(&self, expected: &[Coin]) -> &Self {
         let actual = self.query_distribution_acc_balances();
         for (i, coin) in expected.iter().enumerate() {

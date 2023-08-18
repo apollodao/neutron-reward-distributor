@@ -11,4 +11,7 @@ pub enum ContractError {
 
     #[error(transparent)]
     CwDex(#[from] cw_dex::CwDexError),
+
+    #[error("Unauthorized")]
+    Unauthorized {},
 }

@@ -35,14 +35,14 @@ impl Config {
     /// Updates the existing config with the given updates. If a field is
     /// `None` in the `updates` then the old config is kept, else it is updated
     /// to the new value.
-    pub fn update(self, api: &dyn Api, updates: ConfigUpdates) -> StdResult<Config> {
+    pub fn update(&self, api: &dyn Api, updates: ConfigUpdates) -> StdResult<Config> {
         ConfigUnchecked {
             emission_per_second: updates
                 .emission_per_second
                 .unwrap_or(self.emission_per_second),
             distribution_addr: updates
                 .distribution_addr
-                .unwrap_or_else(|| self.distribution_addr.into()),
+                .unwrap_or_else(|| self.distribution_addr.clone().into()),
         }
         .check(api)
     }

@@ -1966,6 +1966,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-dex",
  "cw-it",
+ "cw-ownable",
  "locked-astroport-vault-test-helpers",
  "neutron-astroport-reward-distributor",
  "neutron-astroport-reward-distributor-contract",
