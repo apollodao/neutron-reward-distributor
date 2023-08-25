@@ -103,9 +103,8 @@ pub fn execute_internal_lp_redeemed(deps: Deps, env: Env) -> Result<Response, Co
     // Create msg to send assets to distribution address
     let send_msgs = pool_asset_balances.transfer_msgs(config.distribution_addr)?;
 
-    let mut event = Event::new(
-        "apollo/neutron-astroport-reward-distributor/execute_internal_vault_tokens_redeemed",
-    );
+    let mut event =
+        Event::new("apollo/neutron-astroport-reward-distributor/execute_internal_lp_redeemed");
     for asset in pool_asset_balances.iter() {
         event = event.add_attribute("asset_distributed", asset.to_string());
     }
