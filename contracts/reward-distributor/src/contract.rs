@@ -18,7 +18,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
@@ -53,7 +53,7 @@ pub fn instantiate(
     .check(deps.api)?;
 
     CONFIG.save(deps.storage, &config)?;
-    LAST_DISTRIBUTED.save(deps.storage, &msg.rewards_start_time)?;
+    LAST_DISTRIBUTED.save(deps.storage, &env.block.time.seconds())?;
     REWARD_POOL.save(deps.storage, &reward_pool)?;
     REWARD_VAULT.save(deps.storage, &reward_vault)?;
 
@@ -73,7 +73,9 @@ pub fn execute(
             Ok(Response::default().add_attributes(ownership.into_attributes()))
         }
         ExecuteMsg::Distribute {} => execute::execute_distribute(deps, env),
-        ExecuteMsg::UpdateConfig { updates } => execute::execute_update_config(deps, info, updates),
+        ExecuteMsg::UpdateConfig { updates } => {
+            execute::execute_update_config(deps, env, info, updates)
+        }
         ExecuteMsg::Internal(msg) => {
             // Internal messages can only be called by the contract itself
             if info.sender != env.contract.address {

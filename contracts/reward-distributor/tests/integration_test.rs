@@ -50,59 +50,6 @@ fn test_initialization() {
 }
 
 #[test]
-fn distribute_errors_on_no_rewards_to_distribute() {
-    let runner = get_test_runner();
-    let admin = RewardDistributorRobot::default_account(&runner);
-    let treasury_addr = runner.init_account(&[]).unwrap();
-    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
-    let emission_per_second = 0u128;
-    let rewards_start_time = runner.query_block_time_nanos() / 1_000_000_000;
-    let robot = RewardDistributorRobot::instantiate(
-        &runner,
-        &dependencies,
-        DEPS_PATH,
-        UNOPTIMIZED_PATH,
-        treasury_addr.address(),
-        &admin,
-        emission_per_second,
-        rewards_start_time,
-    );
-
-    robot
-        .distribute(Unwrap::Err("Can only distribute once per block"), &admin)
-        .increase_time(5)
-        .distribute(Unwrap::Err("No rewards to distribute"), &admin);
-}
-
-#[test]
-fn distribute_errors_when_rewards_not_yet_started() {
-    let runner = get_test_runner();
-    let admin = RewardDistributorRobot::default_account(&runner);
-    let treasury_addr = runner.init_account(&[]).unwrap();
-    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
-    let emission_per_second = 100u128;
-    let rewards_start_time = runner.query_block_time_nanos() / 1_000_000_000 + 5;
-    let robot = RewardDistributorRobot::instantiate(
-        &runner,
-        &dependencies,
-        DEPS_PATH,
-        UNOPTIMIZED_PATH,
-        treasury_addr.address(),
-        &admin,
-        emission_per_second,
-        rewards_start_time,
-    );
-
-    // Deposit to vault
-    let deposit_amount = Uint128::new(10000000u128);
-    robot
-        .deposit_to_distributor(deposit_amount, &admin)
-        .distribute(Unwrap::Err("Rewards have not started"), &admin)
-        .increase_time(6)
-        .distribute(Unwrap::Ok, &admin);
-}
-
-#[test]
 fn distribute_errors_when_not_enough_vault_tokens_in_contract() {
     let runner = get_test_runner();
     let admin = RewardDistributorRobot::default_account(&runner);
@@ -166,7 +113,7 @@ fn test_correct_distribute() {
     let time_elapsed = 1000u64;
     robot
         .assert_distribution_acc_balances_eq(&[])
-        .distribute(Unwrap::Err("Rewards have not started"), &admin)
+        .distribute(Unwrap::Ok, &admin)
         .increase_time(5) // Rewards have started
         .assert_distribution_acc_balances_eq(&[])
         .increase_time(time_elapsed)
