@@ -12,19 +12,16 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
 
     // Only distribute if rewards start time has passed
     if current_time < config.rewards_start_time {
-        return Err(ContractError::RewardsNotStarted {
-            current_time,
-            start_time: config.rewards_start_time,
-        });
+        return Ok(Response::new());
     }
 
-    // Only distribute once per block
+    // Only distribute once per second
     if current_time == last_distributed {
-        return Err(ContractError::CanOnlyDistributeOncePerBlock {});
+        return Ok(Response::new());
     }
 
     // Calculate amount of rewards to be distributed
-    let time_elapsed = current_time.saturating_sub(last_distributed);
+    let time_elapsed = current_time.saturating_sub(last_distributed.max(config.rewards_start_time));
     let redeem_amount = config.emission_per_second * Uint128::from(time_elapsed);
 
     // Set last distributed time to current time
@@ -32,7 +29,7 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
 
     // Only distribute if there are rewards to be distributed
     if redeem_amount.is_zero() {
-        return Err(ContractError::NoRewardsToDistribute {});
+        return Ok(Response::new());
     }
 
     // Check contract's balance of vault tokens and error if not enough. This is
@@ -113,7 +110,8 @@ pub fn execute_internal_lp_redeemed(deps: Deps, env: Env) -> Result<Response, Co
 }
 
 pub fn execute_update_config(
-    deps: DepsMut,
+    mut deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     updates: ConfigUpdates,
 ) -> Result<Response, ContractError> {
@@ -123,6 +121,17 @@ pub fn execute_update_config(
     let config = CONFIG.load(deps.storage)?;
     let updated_config = config.update(deps.api, updates)?;
 
+    // If we are changing the emission rate or the reward start time, we first need
+    // to distribute rewards, so that the emission rate change takes effect from
+    // the current block.
+    let res = if config.emission_per_second != updated_config.emission_per_second
+        || config.rewards_start_time != updated_config.rewards_start_time
+    {
+        execute_distribute(deps.branch(), env)?
+    } else {
+        Response::default()
+    };
+
     // Update config
     CONFIG.save(deps.storage, &updated_config)?;
 
@@ -130,5 +139,5 @@ pub fn execute_update_config(
         .add_attribute("old_config", format!("{:?}", config))
         .add_attribute("new_config", format!("{:?}", updated_config));
 
-    Ok(Response::default().add_event(event))
+    Ok(res.add_event(event))
 }
