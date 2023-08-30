@@ -49,6 +49,10 @@ fn test_initialization() {
         state.reward_vault.vault_token,
         robot.reward_vault_robot.vault_token()
     );
+
+    // Query ownership
+    let ownership = robot.query_ownership();
+    assert_eq!(ownership.owner.unwrap(), admin.address());
 }
 
 #[test]
