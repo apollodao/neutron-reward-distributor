@@ -22,3 +22,4 @@ locked-astroport-vault-test-helpers           = { workspace = true }
 neutron-astroport-reward-distributor          = { workspace = true }
 neutron-astroport-reward-distributor-contract = { workspace = true }
 cw-ownable                                    = { workspace = true }
+locked-astroport-vault                        = { workspace = true }

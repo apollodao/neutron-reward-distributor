@@ -1,10 +1,10 @@
 use common::get_test_runner;
 use cosmwasm_std::Uint128;
+use cw_it::helpers::Unwrap;
 use cw_it::robot::TestRobot;
 use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
 
-use locked_astroport_vault_test_helpers::helpers::Unwrap;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
 use neutron_astroport_reward_distributor::{ConfigUpdates, ExecuteMsg, InternalMsg};
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
@@ -17,7 +17,8 @@ pub mod common;
 
 #[test]
 fn update_ownership_can_only_be_called_by_admin() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = RewardDistributorRobot::default_account(&runner);
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
@@ -53,7 +54,8 @@ fn update_ownership_can_only_be_called_by_admin() {
 
 #[test]
 fn update_config_can_only_be_called_by_admin() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = RewardDistributorRobot::default_account(&runner);
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
@@ -88,7 +90,8 @@ fn update_config_can_only_be_called_by_admin() {
 
 #[test]
 fn internal_msg_can_only_be_called_by_contract() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = RewardDistributorRobot::default_account(&runner);
     let treasury_addr = runner.init_account(&[]).unwrap();
     let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
