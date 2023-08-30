@@ -51,7 +51,8 @@ fn update_config_works_correctly() {
 }
 
 #[test]
-/// Ensures that pending rewards are distributed when emission rate or start time changes
+/// Ensures that pending rewards are distributed when emission rate or start
+/// time changes
 fn update_config_distributes_rewards_if_emission_rate_or_start_time_changes() {
     let owned_runner = get_test_runner();
     let runner = owned_runner.as_ref();

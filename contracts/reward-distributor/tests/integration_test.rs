@@ -149,3 +149,55 @@ fn test_correct_distribute() {
         vault_token_balance.u128() - emission_per_second * time_elapsed as u128,
     );
 }
+
+#[test]
+fn distribute_does_not_error_when_distributed_vault_token_amount_would_give_zero_base_tokens() {
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = RewardDistributorRobot::default_account(&runner);
+    let treasury_addr = runner.init_account(&[]).unwrap();
+    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
+    let emission_per_second = 100u128;
+    let init_time = runner.query_block_time_nanos() / 1_000_000_000;
+    let rewards_start_time = init_time + 5;
+    let robot = RewardDistributorRobot::instantiate(
+        &runner,
+        &dependencies,
+        DEPS_PATH,
+        UNOPTIMIZED_PATH,
+        treasury_addr.address(),
+        &admin,
+        emission_per_second,
+        rewards_start_time,
+    );
+
+    let vault_robot = &robot.reward_vault_robot;
+
+    // Deposit to vault and send vault tokens to reward distributor
+    let deposit_amount = Uint128::new(100);
+    let vault_token_balance = robot
+        .deposit_to_distributor(deposit_amount, Unwrap::Ok, &admin)
+        .reward_vault_robot
+        .query_vault_token_balance(&robot.reward_distributor_addr);
+    assert_eq!(
+        vault_token_balance,
+        deposit_amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN // 100 * 1_000_000 = 100_000_000
+    );
+
+    // Distribute rewards and check balances.
+    // After time_elapsed the amount available to distribute would be 10 * 100 =
+    // 1000 vault tokens, which would give 0 base tokens.
+    let time_elapsed = 10u64;
+    robot
+        .assert_distribution_acc_balances_eq(&[])
+        .distribute(Unwrap::Ok, &admin)
+        .increase_time(5) // Rewards have started
+        .assert_distribution_acc_balances_eq(&[])
+        .increase_time(time_elapsed)
+        .distribute(Unwrap::Ok, &admin)
+        .assert_distribution_acc_balances_eq(&[]);
+
+    // Vault token balance of reward distributor should have remained the same, as
+    // no rewards were distributed
+    vault_robot.assert_vault_token_balance_eq(robot.reward_distributor_addr, vault_token_balance);
+}
