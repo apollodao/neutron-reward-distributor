@@ -1,17 +1,18 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Coin, Coins, Uint128};
+use cosmwasm_std::{Coin, Coins, Decimal, Uint128};
 use cw_dex::astroport::AstroportPool;
 use cw_it::astroport::robot::AstroportTestRobot;
 use cw_it::astroport::utils::AstroportContracts;
 use cw_it::cw_multi_test::ContractWrapper;
+use cw_it::helpers::Unwrap;
 use cw_it::osmosis_std::types::cosmos::bank::v1beta1::QueryAllBalancesRequest;
 use cw_it::robot::TestRobot;
 use cw_it::test_tube::{Account, Module, SigningAccount, Wasm};
 use cw_it::traits::CwItRunner;
 use cw_it::{ContractType, TestRunner};
+use locked_astroport_vault::helpers::INITIAL_VAULT_TOKENS_PER_BASE_TOKEN;
 use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
-use locked_astroport_vault_test_helpers::helpers::Unwrap;
 use locked_astroport_vault_test_helpers::robot::{
     LockedAstroportVaultRobot, LockedVaultDependencies,
 };
@@ -94,6 +95,7 @@ impl<'a> RewardDistributorRobot<'a> {
                 LockedAstroportVaultRobot::contract(runner, dependency_artifacts_dir),
                 Coin::from_str(DENOM_CREATION_FEE).unwrap(),
                 vault_treasury_addr,
+                Decimal::percent(5),
                 vault_dependencies,
                 admin,
             );
@@ -128,15 +130,19 @@ impl<'a> RewardDistributorRobot<'a> {
     pub fn deposit_to_distributor(
         &self,
         base_token_amount: Uint128,
+        unwrap_choice: Unwrap,
         signer: &SigningAccount,
     ) -> &Self {
         self.reward_vault_robot
-            .deposit_cw20(base_token_amount, None, signer)
-            .assert_vault_token_balance_eq(signer.address(), base_token_amount)
+            .deposit_cw20(base_token_amount, None, unwrap_choice, signer)
+            .assert_vault_token_balance_eq(
+                signer.address(),
+                base_token_amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
+            )
             .send_native_tokens(
                 signer,
                 &self.reward_distributor_addr,
-                base_token_amount,
+                base_token_amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
                 &self.reward_vault_robot.vault_token(),
             );
         self
