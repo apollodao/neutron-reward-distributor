@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Coin, Coins, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Coins, Decimal, Uint128};
 use cw_dex::astroport::AstroportPool;
 use cw_it::astroport::robot::AstroportTestRobot;
 use cw_it::astroport::utils::AstroportContracts;
@@ -11,6 +11,7 @@ use cw_it::robot::TestRobot;
 use cw_it::test_tube::{Account, Module, SigningAccount, Wasm};
 use cw_it::traits::CwItRunner;
 use cw_it::{ContractType, TestRunner};
+use cw_ownable::Ownership;
 use locked_astroport_vault::helpers::INITIAL_VAULT_TOKENS_PER_BASE_TOKEN;
 use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::robot::{
@@ -21,7 +22,7 @@ use neutron_astroport_reward_distributor::InstantiateMsg;
 
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
-use reward_distributor::ConfigUpdates;
+use reward_distributor::{Config, ConfigUpdates, QueryMsg};
 
 pub const REWARD_DISTRIBUTOR_WASM_NAME: &str = "neutron_astroport_reward_distributor_contract.wasm";
 
@@ -221,6 +222,17 @@ impl<'a> RewardDistributorRobot<'a> {
                 amount: Uint128::from_str(&b.amount).unwrap(),
             })
             .collect()
+    }
+
+    /// Queries the ownership info of the vault
+    pub fn query_ownership(&self) -> Ownership<Addr> {
+        self.wasm()
+            .query::<_, Ownership<Addr>>(&self.reward_distributor_addr, &QueryMsg::Ownership {})
+            .unwrap()
+    }
+
+    pub fn query_config(&self) -> Config {
+        self.query_state().config
     }
 
     // Assertions //
