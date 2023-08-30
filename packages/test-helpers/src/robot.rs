@@ -262,6 +262,16 @@ impl<'a> RewardDistributorRobot<'a> {
         }
         self
     }
+
+    /// Asserts that the contract's config is equal to the given config
+    pub fn assert_config_eq(&self, expected: &Config) -> &Self {
+        assert_eq!(
+            self.query_config(),
+            *expected,
+            "Config does not match expected"
+        );
+        self
+    }
 }
 
 impl<'a> TestRobot<'a, TestRunner<'a>> for RewardDistributorRobot<'a> {
