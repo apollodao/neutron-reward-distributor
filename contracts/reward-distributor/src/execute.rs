@@ -24,11 +24,13 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
     let time_elapsed = current_time.saturating_sub(last_distributed.max(config.rewards_start_time));
     let redeem_amount = config.emission_per_second * Uint128::from(time_elapsed);
 
-    // Set last distributed time to current time
-    LAST_DISTRIBUTED.save(deps.storage, &current_time)?;
-
-    // Only distribute if there are rewards to be distributed
-    if redeem_amount.is_zero() {
+    // Query the vault to see how many base tokens would be returned after
+    // redeeming. If zero we return Ok, so that update_config does not fail when
+    // trying to distribute.
+    let base_token_amount = REWARD_VAULT
+        .load(deps.storage)?
+        .query_convert_to_assets(&deps.querier, redeem_amount)?;
+    if base_token_amount.is_zero() {
         return Ok(Response::new());
     }
 
@@ -45,6 +47,9 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
             redeem_amount,
         });
     }
+
+    // Set last distributed time to current time
+    LAST_DISTRIBUTED.save(deps.storage, &current_time)?;
 
     // Redeem rewards from the vault
     let redeem_msg = reward_vault.redeem(redeem_amount, None)?;
