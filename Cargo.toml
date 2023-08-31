@@ -3,13 +3,12 @@ members = ["contracts/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
-version       = "0.1.0"
+version       = "0.1.0-rc.1"
 authors       = ["Sturdy <sturdy@apollo.farm>"]
 edition       = "2021"
 license       = "MPL-2.0"
 homepage      = "https://apollo.farm"
 repository    = "https://github.com/apollodao/neutron-reward-distributor"
-documentation = ""
 keywords      = ["blockchain", "cosmos", "cosmwasm"]
 rust-version  = "1.69.0"
 
