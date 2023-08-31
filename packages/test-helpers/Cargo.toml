@@ -1,12 +1,12 @@
 [package]
 name = "neutron-astroport-reward-distributor-test-helpers"
+documentation = "https://docs.rs/neutron-astroport-reward-distributor-test-helpers"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }
 homepage      = { workspace = true }
 repository    = { workspace = true }
-documentation = { workspace = true }
 keywords      = { workspace = true }
 rust-version  = { workspace = true }
 

@@ -1,13 +1,13 @@
 [package]
 name          = "neutron-astroport-reward-distributor"
 description   = "Public API for the Neutron Astroport Reward Distributor contract"
+documentation = "https://docs.rs/neutron-astroport-reward-distributor"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }
 homepage      = { workspace = true }
 repository    = { workspace = true }
-documentation = { workspace = true }
 keywords      = { workspace = true }
 rust-version  = { workspace = true }
 
