@@ -3,7 +3,7 @@ members = ["contracts/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
-version       = "0.1.0-rc.1"
+version       = "0.1.0"
 authors       = ["Sturdy <sturdy@apollo.farm>"]
 edition       = "2021"
 license       = "MPL-2.0"
@@ -18,9 +18,9 @@ cosmwasm-std      = "1.2"
 cw2               = "1.0"
 cw-ownable        = "0.5"
 thiserror         = "1"
-cw-dex            = { version = "0.4.0-rc.1", features = ["astroport"] }
+cw-dex            = { version = "0.4.0", features = ["astroport"] }
 cw-storage-plus   = "1.1.0"
-cw-vault-standard = "0.3.3-rc.1"
+cw-vault-standard = "0.4.0"
 apollo-cw-asset   = "0.1.2"
 cw-address-like   = "1.0.4"
 derive_builder    = "0.12.0"
@@ -34,10 +34,10 @@ neutron-astroport-reward-distributor-contract = { path = "contracts/reward-distr
 neutron-astroport-reward-distributor-test-helpers = { path = "packages/test-helpers" }
 
 # Dev Dependencies
-cw-it             = { version = "0.2.0-rc.3", features = ["astroport-multi-test"] }
-locked-astroport-vault = "0.1.0-rc.2"
-locked-astroport-vault-test-helpers = "0.1.0-rc.2"
-cw-vault-standard-test-helpers = "0.3.3-rc.3"
+cw-it             = { version = "0.2.0", features = ["astroport-multi-test"] }
+locked-astroport-vault = "0.1.0"
+locked-astroport-vault-test-helpers = "0.1.0"
+cw-vault-standard-test-helpers = "0.3.3"
 
 [profile.release]
 codegen-units    = 1
