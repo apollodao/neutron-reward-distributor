@@ -22,7 +22,7 @@ use neutron_astroport_reward_distributor::InstantiateMsg;
 
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
-use reward_distributor::{Config, ConfigUpdates, QueryMsg};
+use reward_distributor::{Config, ConfigUpdates, QueryMsg, RewardInfo};
 
 pub const REWARD_DISTRIBUTOR_WASM_NAME: &str = "neutron_astroport_reward_distributor_contract.wasm";
 
@@ -109,7 +109,7 @@ impl<'a> RewardDistributorRobot<'a> {
             distribution_addr: distribution_acc.address(),
             emission_per_second: emission_per_second.into(),
             owner: admin.address(),
-            reward_vault_addr: reward_vault_robot.vault_addr.clone(),
+            reward_token_info: RewardInfo::VaultAddr(reward_vault_robot.vault_addr.clone()),
             rewards_start_time,
         };
         let contract_addr = Wasm::new(runner)

@@ -3,10 +3,10 @@ use cosmwasm_std::{coin, Uint128};
 use cw_it::helpers::Unwrap;
 use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
-
 use locked_astroport_vault::helpers::INITIAL_VAULT_TOKENS_PER_BASE_TOKEN;
 use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
+use neutron_astroport_reward_distributor::RewardType;
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
 use test_helpers::robot::RewardDistributorRobot;
@@ -39,16 +39,10 @@ fn test_initialization() {
     let config = state.config;
     assert_eq!(config.emission_per_second, Uint128::from(1000000u128));
     assert_eq!(config.distribution_addr, robot.distribution_acc.address());
-    assert_eq!(state.reward_pool, robot.reward_pool);
-    assert_eq!(
-        state.reward_pool.lp_token_addr.to_string(),
-        robot.reward_vault_robot.base_token()
-    );
-    assert_eq!(state.reward_vault.addr, robot.reward_vault_robot.vault_addr);
-    assert_eq!(
-        state.reward_vault.vault_token,
-        robot.reward_vault_robot.vault_token()
-    );
+    assert!(matches!(
+        state.reward_token,
+        RewardType::Vault { vault, pool } if vault.addr == robot.reward_vault_robot.vault_addr && pool.lp_token_addr == robot.reward_vault_robot.base_token()
+    ));
 
     // Query ownership
     let ownership = robot.query_ownership();

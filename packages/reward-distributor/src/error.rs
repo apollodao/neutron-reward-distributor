@@ -21,3 +21,9 @@ pub enum ContractError {
         redeem_amount: Uint128,
     },
 }
+
+impl ContractError {
+    pub fn generic_err(msg: &str) -> Self {
+        StdError::generic_err(msg).into()
+    }
+}
