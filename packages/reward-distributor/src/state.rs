@@ -1,10 +1,10 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::StdError;
 use cw_dex::astroport::AstroportPool;
 use cw_storage_plus::Item;
 use cw_vault_standard::VaultContract;
 
 use crate::config::Config;
-use crate::ContractError;
 
 /// An enum representing different types of reward tokens
 #[cw_serde]
@@ -23,11 +23,11 @@ pub enum RewardType {
 }
 
 impl RewardType {
-    pub fn into_pool(self) -> Result<AstroportPool, ContractError> {
+    pub fn into_pool(self) -> Result<AstroportPool, StdError> {
         match self {
             RewardType::Vault { vault: _, pool } => Ok(pool),
             RewardType::LP(pool) => Ok(pool),
-            RewardType::Coin(_) => Err(ContractError::generic_err(
+            RewardType::Coin(_) => Err(StdError::generic_err(
                 "Cannot redeem vault tokens from coin reward",
             )),
         }
