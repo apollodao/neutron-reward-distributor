@@ -1972,6 +1972,7 @@ dependencies = [
  "cw-dex",
  "cw-it",
  "cw-ownable",
+ "cw20 0.15.1",
  "locked-astroport-vault",
  "locked-astroport-vault-test-helpers",
  "neutron-astroport-reward-distributor",
