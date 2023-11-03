@@ -9,7 +9,7 @@ use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
 use neutron_astroport_reward_distributor::{Config, ConfigUpdates};
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
-use test_helpers::robot::RewardDistributorRobot;
+use test_helpers::robot::{RewardDistributorRobot, TestRewardType};
 
 use crate::common::{DEPS_PATH, UNOPTIMIZED_PATH};
 
@@ -31,6 +31,7 @@ fn update_config_works_correctly() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -68,6 +69,7 @@ fn update_config_distributes_rewards_if_emission_rate_or_start_time_changes() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -115,6 +117,7 @@ fn update_config_does_not_distribute_rewards_when_not_changing_emission_rate_or_
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,

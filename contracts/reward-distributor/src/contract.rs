@@ -7,7 +7,7 @@ use cw_dex::astroport::AstroportPool;
 use cw_vault_standard::{VaultContract, VaultContractUnchecked};
 use neutron_astroport_reward_distributor::{
     Config, ConfigUnchecked, ContractError, ExecuteMsg, InstantiateMsg, InternalMsg, QueryMsg,
-    StateResponse, CONFIG, LAST_DISTRIBUTED, REWARD_POOL, REWARD_VAULT,
+    RewardInfo, RewardType, StateResponse, CONFIG, LAST_DISTRIBUTED, REWARD_TOKEN,
 };
 
 use crate::execute;
@@ -25,24 +25,41 @@ pub fn instantiate(
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.owner))?;
 
-    let reward_vault: VaultContract =
-        VaultContractUnchecked::new(&msg.reward_vault_addr).check(deps.as_ref())?;
+    let reward_token = match msg.reward_token_info {
+        RewardInfo::VaultAddr(reward_vault_addr) => {
+            let reward_vault: VaultContract =
+                VaultContractUnchecked::new(&reward_vault_addr).check(deps.as_ref())?;
 
-    // Validate reward vault base token as CW20 Astroport LP token
-    let reward_lp_token = deps
-        .api
-        .addr_validate(&reward_vault.base_token)
-        .map_err(|_| StdError::generic_err("Invalid base token of reward vault"))?;
+            // Validate reward vault base token as CW20 Astroport LP token
+            let reward_lp_token = deps
+                .api
+                .addr_validate(&reward_vault.base_token)
+                .map_err(|_| StdError::generic_err("Invalid base token of reward vault"))?;
 
-    // Query minter of LP token to get reward pool address
-    let minter_res: MinterResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: reward_lp_token.to_string(),
-        msg: to_binary(&Cw20QueryMsg::Minter {})?,
-    }))?;
-    let reward_pool_addr = deps.api.addr_validate(&minter_res.minter)?;
+            // Query minter of LP token to get reward pool address
+            let minter_res: MinterResponse =
+                deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                    contract_addr: reward_lp_token.to_string(),
+                    msg: to_binary(&Cw20QueryMsg::Minter {})?,
+                }))?;
+            let reward_pool_addr = deps.api.addr_validate(&minter_res.minter)?;
 
-    // Query reward pool for pool info to create pool object
-    let reward_pool = AstroportPool::new(deps.as_ref(), reward_pool_addr)?;
+            // Query reward pool for pool info to create pool object
+            let reward_pool = AstroportPool::new(deps.as_ref(), reward_pool_addr)?;
+
+            RewardType::Vault {
+                vault: reward_vault,
+                pool: reward_pool,
+            }
+        }
+        RewardInfo::AstroportPoolAddr(pool_addr) => {
+            let reward_pool =
+                AstroportPool::new(deps.as_ref(), deps.api.addr_validate(&pool_addr)?)?;
+
+            RewardType::LP(reward_pool)
+        }
+        RewardInfo::NativeCoin(reward_coin_denom) => RewardType::Coin(reward_coin_denom),
+    };
 
     // Create config
     let config: Config = ConfigUnchecked {
@@ -54,8 +71,7 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
     LAST_DISTRIBUTED.save(deps.storage, &env.block.time.seconds())?;
-    REWARD_POOL.save(deps.storage, &reward_pool)?;
-    REWARD_VAULT.save(deps.storage, &reward_vault)?;
+    REWARD_TOKEN.save(deps.storage, &reward_token)?;
 
     Ok(Response::default())
 }
@@ -103,14 +119,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         }
         QueryMsg::State {} => {
             let config = CONFIG.load(deps.storage)?;
-            let reward_pool = REWARD_POOL.load(deps.storage)?;
-            let reward_vault = REWARD_VAULT.load(deps.storage)?;
             let last_distributed = LAST_DISTRIBUTED.load(deps.storage)?;
 
             to_binary(&StateResponse {
                 config,
-                reward_pool,
-                reward_vault,
+                reward_token: REWARD_TOKEN.load(deps.storage)?,
                 last_distributed,
             })
         }

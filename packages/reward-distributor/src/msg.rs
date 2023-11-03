@@ -1,10 +1,21 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, CosmosMsg, Env, StdResult, Uint128, WasmMsg};
-use cw_dex::astroport::AstroportPool;
 use cw_ownable::{cw_ownable_execute, cw_ownable_query};
-use cw_vault_standard::VaultContract;
 
-use crate::{Config, ConfigUpdates};
+use crate::{Config, ConfigUpdates, RewardType};
+
+/// An enum for the information needed to instantiate the contract depending on
+/// the type of reward token used.
+#[cw_serde]
+pub enum RewardInfo {
+    /// The address of the vault if the reward token is a vault token
+    VaultAddr(String),
+    /// The address of the Astroport pool if the reward token is an Astroport LP
+    /// token
+    AstroportPoolAddr(String),
+    /// The denom of the native coin if the reward token is a native coin
+    NativeCoin(String),
+}
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -12,8 +23,9 @@ pub struct InstantiateMsg {
     pub owner: String,
     /// The emission rate per second
     pub emission_per_second: Uint128,
-    /// The address of the vault contract in which rewards are being held
-    pub reward_vault_addr: String,
+    /// The info needed to instantiate the contract depending on the type of
+    /// reward token used
+    pub reward_token_info: RewardInfo,
     /// The address that rewards are being distributed to
     pub distribution_addr: String,
     /// The unix timestamp at which rewards start being distributed
@@ -67,7 +79,6 @@ pub enum QueryMsg {
 /// The response to a config query
 pub struct StateResponse {
     pub config: Config,
-    pub reward_pool: AstroportPool,
-    pub reward_vault: VaultContract,
+    pub reward_token: RewardType,
     pub last_distributed: u64,
 }

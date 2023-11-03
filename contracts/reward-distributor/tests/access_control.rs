@@ -9,7 +9,7 @@ use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
 use neutron_astroport_reward_distributor::{ConfigUpdates, ExecuteMsg, InternalMsg};
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
-use test_helpers::robot::RewardDistributorRobot;
+use test_helpers::robot::{RewardDistributorRobot, TestRewardType};
 
 use crate::common::{DEPS_PATH, UNOPTIMIZED_PATH};
 
@@ -30,6 +30,7 @@ fn update_ownership_can_only_be_called_by_admin() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -67,6 +68,7 @@ fn update_config_can_only_be_called_by_admin() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -103,6 +105,7 @@ fn internal_msg_can_only_be_called_by_contract() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,

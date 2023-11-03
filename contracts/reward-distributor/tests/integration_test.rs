@@ -1,15 +1,16 @@
 use common::get_test_runner;
 use cosmwasm_std::{coin, Uint128};
 use cw_it::helpers::Unwrap;
+use cw_it::robot::TestRobot;
 use cw_it::test_tube::Account;
 use cw_it::traits::CwItRunner;
-
 use locked_astroport_vault::helpers::INITIAL_VAULT_TOKENS_PER_BASE_TOKEN;
 use locked_astroport_vault_test_helpers::cw_vault_standard_test_helpers::traits::CwVaultStandardRobot;
 use locked_astroport_vault_test_helpers::robot::LockedAstroportVaultRobot;
+use neutron_astroport_reward_distributor::RewardType;
 use neutron_astroport_reward_distributor_test_helpers as test_helpers;
 
-use test_helpers::robot::RewardDistributorRobot;
+use test_helpers::robot::{RewardDistributorRobot, TestRewardType};
 
 use crate::common::{DEPS_PATH, UNOPTIMIZED_PATH};
 
@@ -29,6 +30,7 @@ fn test_initialization() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         1000000u128,
         rewards_start_time,
@@ -39,16 +41,10 @@ fn test_initialization() {
     let config = state.config;
     assert_eq!(config.emission_per_second, Uint128::from(1000000u128));
     assert_eq!(config.distribution_addr, robot.distribution_acc.address());
-    assert_eq!(state.reward_pool, robot.reward_pool);
-    assert_eq!(
-        state.reward_pool.lp_token_addr.to_string(),
-        robot.reward_vault_robot.base_token()
-    );
-    assert_eq!(state.reward_vault.addr, robot.reward_vault_robot.vault_addr);
-    assert_eq!(
-        state.reward_vault.vault_token,
-        robot.reward_vault_robot.vault_token()
-    );
+    assert!(matches!(
+        state.reward_token,
+        RewardType::Vault { vault, pool } if vault.addr == robot.reward_vault_robot.vault_addr && pool.lp_token_addr == robot.reward_vault_robot.base_token()
+    ));
 
     // Query ownership
     let ownership = robot.query_ownership();
@@ -70,6 +66,7 @@ fn distribute_errors_when_not_enough_vault_tokens_in_contract() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -90,7 +87,7 @@ fn distribute_errors_when_not_enough_vault_tokens_in_contract() {
 }
 
 #[test]
-fn test_correct_distribute() {
+fn test_vault_tokens_correct_distribute() {
     let owned_runner = get_test_runner();
     let runner = owned_runner.as_ref();
     let admin = RewardDistributorRobot::default_account(&runner);
@@ -105,6 +102,7 @@ fn test_correct_distribute() {
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,
@@ -151,6 +149,116 @@ fn test_correct_distribute() {
 }
 
 #[test]
+fn test_lp_tokens_correct_distribute() {
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = RewardDistributorRobot::default_account(&runner);
+    let treasury_addr = runner.init_account(&[]).unwrap();
+    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
+    let emission_per_second = 100_000u128;
+    let init_time = runner.query_block_time_nanos() / 1_000_000_000;
+    let rewards_start_time = init_time + 5;
+    let robot = RewardDistributorRobot::instantiate(
+        &runner,
+        &dependencies,
+        DEPS_PATH,
+        UNOPTIMIZED_PATH,
+        treasury_addr.address(),
+        TestRewardType::LpToken,
+        &admin,
+        emission_per_second,
+        rewards_start_time,
+    );
+
+    let vault_robot = &robot.reward_vault_robot;
+
+    // Send base tokens to reward distributor
+    let base_token_balance = vault_robot.query_base_token_balance(admin.address());
+    let deposit_amount = base_token_balance / Uint128::new(10);
+    let distributor_balance_before = robot
+        .deposit_to_distributor(deposit_amount, Unwrap::Ok, &admin)
+        .reward_vault_robot
+        .query_base_token_balance(&robot.reward_distributor_addr);
+
+    // Distribute rewards and check balances
+    let time_elapsed = 1000u64;
+    robot
+        .assert_distribution_acc_balances_eq(&[])
+        .distribute(Unwrap::Ok, &admin)
+        .increase_time(5) // Rewards have started
+        .assert_distribution_acc_balances_eq(&[])
+        .increase_time(time_elapsed)
+        .distribute(Unwrap::Ok, &admin)
+        .assert_distribution_acc_balances_eq(&[
+            coin(emission_per_second * time_elapsed as u128, "uaxl"),
+            coin(emission_per_second * time_elapsed as u128, "untrn"),
+        ]);
+
+    // Vault token balance of reward distributor should have decreased with the
+    // amount distributed
+    vault_robot.assert_base_token_balance_eq(
+        robot.reward_distributor_addr,
+        distributor_balance_before.u128() - emission_per_second * time_elapsed as u128,
+    );
+}
+
+#[test]
+fn test_native_token_correct_distribute() {
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = RewardDistributorRobot::default_account(&runner);
+    let treasury_addr = runner.init_account(&[]).unwrap();
+    let dependencies = LockedAstroportVaultRobot::instantiate_deps(&runner, &admin, DEPS_PATH);
+    let emission_per_second = 100_000u128;
+    let init_time = runner.query_block_time_nanos() / 1_000_000_000;
+    let rewards_start_time = init_time + 5;
+    let reward_token_denom = "uaxl";
+    let robot = RewardDistributorRobot::instantiate(
+        &runner,
+        &dependencies,
+        DEPS_PATH,
+        UNOPTIMIZED_PATH,
+        treasury_addr.address(),
+        TestRewardType::NativeCoin(reward_token_denom.to_string()),
+        &admin,
+        emission_per_second,
+        rewards_start_time,
+    );
+
+    let vault_robot = &robot.reward_vault_robot;
+
+    // Send native tokens to reward distributor
+    let reward_token_balance = vault_robot.query_base_token_balance(admin.address());
+    let deposit_amount = reward_token_balance / Uint128::new(10);
+    let distributor_balance_before = robot
+        .deposit_to_distributor(deposit_amount, Unwrap::Ok, &admin)
+        .reward_vault_robot
+        .query_native_token_balance(&robot.reward_distributor_addr, reward_token_denom);
+
+    // Distribute rewards and check balances
+    let time_elapsed = 1000u64;
+    robot
+        .assert_distribution_acc_balances_eq(&[])
+        .distribute(Unwrap::Ok, &admin)
+        .increase_time(5) // Rewards have started
+        .assert_distribution_acc_balances_eq(&[])
+        .increase_time(time_elapsed)
+        .distribute(Unwrap::Ok, &admin)
+        .assert_distribution_acc_balances_eq(&[coin(
+            emission_per_second * time_elapsed as u128,
+            reward_token_denom,
+        )]);
+
+    // Vault token balance of reward distributor should have decreased with the
+    // amount distributed
+    vault_robot.assert_native_token_balance_eq(
+        robot.reward_distributor_addr,
+        reward_token_denom,
+        distributor_balance_before.u128() - emission_per_second * time_elapsed as u128,
+    );
+}
+
+#[test]
 fn distribute_does_not_error_when_distributed_vault_token_amount_would_give_zero_base_tokens() {
     let owned_runner = get_test_runner();
     let runner = owned_runner.as_ref();
@@ -166,6 +274,7 @@ fn distribute_does_not_error_when_distributed_vault_token_amount_would_give_zero
         DEPS_PATH,
         UNOPTIMIZED_PATH,
         treasury_addr.address(),
+        TestRewardType::VaultToken,
         &admin,
         emission_per_second,
         rewards_start_time,

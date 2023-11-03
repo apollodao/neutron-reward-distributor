@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Coin, Coins, Decimal, Uint128};
+use cw20::Cw20ExecuteMsg;
 use cw_dex::astroport::AstroportPool;
 use cw_it::astroport::robot::AstroportTestRobot;
 use cw_it::astroport::utils::AstroportContracts;
@@ -22,7 +23,7 @@ use neutron_astroport_reward_distributor::InstantiateMsg;
 
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
-use reward_distributor::{Config, ConfigUpdates, QueryMsg};
+use reward_distributor::{Config, ConfigUpdates, QueryMsg, RewardInfo};
 
 pub const REWARD_DISTRIBUTOR_WASM_NAME: &str = "neutron_astroport_reward_distributor_contract.wasm";
 
@@ -45,6 +46,15 @@ pub struct RewardDistributorRobot<'a> {
     pub distribution_acc: SigningAccount,
     pub reward_pool: AstroportPool,
     pub reward_vault_robot: LockedAstroportVaultRobot<'a>,
+    pub reward_type: TestRewardType,
+}
+
+/// An enum representing different types of reward tokens
+#[derive(Clone, Debug)]
+pub enum TestRewardType {
+    VaultToken,
+    LpToken,
+    NativeCoin(String),
 }
 
 /// A trait with helper functions for testing the reward distributor contract.
@@ -85,6 +95,7 @@ impl<'a> RewardDistributorRobot<'a> {
         dependency_artifacts_dir: &str,
         artifacts_dir: &str,
         vault_treasury_addr: String,
+        reward_type: TestRewardType,
         admin: &'a SigningAccount,
         emission_per_second: impl Into<Uint128>,
         rewards_start_time: u64,
@@ -101,15 +112,25 @@ impl<'a> RewardDistributorRobot<'a> {
                 admin,
             );
 
+        let reward_token_info = match &reward_type {
+            TestRewardType::VaultToken => {
+                RewardInfo::VaultAddr(reward_vault_robot.vault_addr.clone())
+            }
+            TestRewardType::LpToken => {
+                RewardInfo::AstroportPoolAddr(axl_ntrn_pool.pair_addr.to_string())
+            }
+            TestRewardType::NativeCoin(denom) => RewardInfo::NativeCoin(denom.clone()),
+        };
+
         // Upload and instantiate reward distributor contract
         let code = Self::contract(runner, artifacts_dir);
         let code_id = runner.store_code(code, admin).unwrap();
         let distribution_acc = runner.init_account(&[]).unwrap();
-        let msg = InstantiateMsg {
+        let msg: InstantiateMsg = InstantiateMsg {
             distribution_addr: distribution_acc.address(),
             emission_per_second: emission_per_second.into(),
             owner: admin.address(),
-            reward_vault_addr: reward_vault_robot.vault_addr.clone(),
+            reward_token_info,
             rewards_start_time,
         };
         let contract_addr = Wasm::new(runner)
@@ -125,27 +146,50 @@ impl<'a> RewardDistributorRobot<'a> {
             distribution_acc,
             reward_pool: axl_ntrn_pool,
             reward_vault_robot,
+            reward_type,
         }
     }
 
     pub fn deposit_to_distributor(
         &self,
-        base_token_amount: Uint128,
+        amount: Uint128,
         unwrap_choice: Unwrap,
         signer: &SigningAccount,
     ) -> &Self {
-        self.reward_vault_robot
-            .deposit_cw20(base_token_amount, None, unwrap_choice, signer)
-            .assert_vault_token_balance_eq(
-                signer.address(),
-                base_token_amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
-            )
-            .send_native_tokens(
-                signer,
-                &self.reward_distributor_addr,
-                base_token_amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
-                &self.reward_vault_robot.vault_token(),
-            );
+        match &self.reward_type {
+            TestRewardType::VaultToken => {
+                // If the reward token is a vault token, we need to deposit base
+                // tokens to the vault and then deposit the vault tokens to the
+                // reward distributor.
+                self.reward_vault_robot
+                    .deposit_cw20(amount, None, unwrap_choice, signer)
+                    .assert_vault_token_balance_eq(
+                        signer.address(),
+                        amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
+                    )
+                    .send_native_tokens(
+                        signer,
+                        &self.reward_distributor_addr,
+                        amount * INITIAL_VAULT_TOKENS_PER_BASE_TOKEN,
+                        &self.reward_vault_robot.vault_token(),
+                    );
+            }
+            TestRewardType::LpToken => {
+                let msg = Cw20ExecuteMsg::Transfer {
+                    recipient: self.reward_distributor_addr.clone(),
+                    amount,
+                };
+                unwrap_choice.unwrap(self.wasm().execute(
+                    self.reward_pool.lp_token_addr.as_str(),
+                    &msg,
+                    &[],
+                    signer,
+                ));
+            }
+            TestRewardType::NativeCoin(denom) => {
+                self.send_native_tokens(signer, &self.reward_distributor_addr, amount, denom);
+            }
+        }
         self
     }
 
