@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
     StdError, StdResult, WasmQuery,
 };
 use cw20::{Cw20QueryMsg, MinterResponse};
@@ -26,35 +26,44 @@ pub fn instantiate(
     cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.owner))?;
 
     let reward_token = match msg.reward_token_info {
-        RewardInfo::VaultAddr(reward_vault_addr) => {
+        RewardInfo::AstroportVault(astroport_vault) => {
             let reward_vault: VaultContract =
-                VaultContractUnchecked::new(&reward_vault_addr).check(deps.as_ref())?;
+                VaultContractUnchecked::new(&astroport_vault.vault_addr).check(deps.api)?;
 
             // Validate reward vault base token as CW20 Astroport LP token
             let reward_lp_token = deps
                 .api
-                .addr_validate(&reward_vault.base_token)
+                .addr_validate(&reward_vault.query_vault_info(&deps.querier)?.base_token)
                 .map_err(|_| StdError::generic_err("Invalid base token of reward vault"))?;
 
             // Query minter of LP token to get reward pool address
             let minter_res: MinterResponse =
                 deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                     contract_addr: reward_lp_token.to_string(),
-                    msg: to_binary(&Cw20QueryMsg::Minter {})?,
+                    msg: to_json_binary(&Cw20QueryMsg::Minter {})?,
                 }))?;
             let reward_pool_addr = deps.api.addr_validate(&minter_res.minter)?;
 
             // Query reward pool for pool info to create pool object
-            let reward_pool = AstroportPool::new(deps.as_ref(), reward_pool_addr)?;
+            let reward_pool = AstroportPool::new(
+                deps.as_ref(),
+                reward_pool_addr,
+                deps.api
+                    .addr_validate(&astroport_vault.liquidity_manager_addr)?,
+            )?;
 
             RewardType::Vault {
                 vault: reward_vault,
                 pool: reward_pool,
             }
         }
-        RewardInfo::AstroportPoolAddr(pool_addr) => {
-            let reward_pool =
-                AstroportPool::new(deps.as_ref(), deps.api.addr_validate(&pool_addr)?)?;
+        RewardInfo::AstroportPool(astroport_pool) => {
+            let reward_pool = AstroportPool::new(
+                deps.as_ref(),
+                deps.api.addr_validate(&astroport_pool.pool_addr)?,
+                deps.api
+                    .addr_validate(&astroport_pool.liquidity_manager_addr)?,
+            )?;
 
             RewardType::LP(reward_pool)
         }
@@ -115,13 +124,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Ownership {} => {
             let ownership = cw_ownable::get_ownership(deps.storage)?;
-            to_binary(&ownership)
+            to_json_binary(&ownership)
         }
         QueryMsg::State {} => {
             let config = CONFIG.load(deps.storage)?;
             let last_distributed = LAST_DISTRIBUTED.load(deps.storage)?;
 
-            to_binary(&StateResponse {
+            to_json_binary(&StateResponse {
                 config,
                 reward_token: REWARD_TOKEN.load(deps.storage)?,
                 last_distributed,
