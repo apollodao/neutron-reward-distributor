@@ -2123,7 +2123,7 @@ dependencies = [
 
 [[package]]
 name = "neutron-astroport-reward-distributor"
-version = "0.1.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2140,7 +2140,7 @@ dependencies = [
 
 [[package]]
 name = "neutron-astroport-reward-distributor-contract"
-version = "0.1.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "apollo-cw-asset",
  "cosmwasm-std",
@@ -2158,7 +2158,7 @@ dependencies = [
 
 [[package]]
 name = "neutron-astroport-reward-distributor-test-helpers"
-version = "0.1.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "cosmwasm-std",
  "cw-dex",
