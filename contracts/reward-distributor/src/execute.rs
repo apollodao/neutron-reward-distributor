@@ -40,12 +40,14 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
                 return Ok(Response::new());
             }
 
+            let vault_info = vault.query_vault_info(&deps.querier)?;
+
             // Check contract's balance of vault tokens and error if not enough. This is
             // just so we get a clearer error message rather than the confusing "cannot
             // sub 0 with x".
             let vault_token_balance = deps
                 .querier
-                .query_balance(&env.contract.address, &vault.vault_token)?;
+                .query_balance(&env.contract.address, &vault_info.vault_token)?;
             if vault_token_balance.amount < reward_amount {
                 return Err(ContractError::InsufficientVaultTokenBalance {
                     vault_token_balance: vault_token_balance.amount,
@@ -54,7 +56,7 @@ pub fn execute_distribute(deps: DepsMut, env: Env) -> Result<Response, ContractE
             }
 
             // Redeem rewards from the vault
-            let redeem_msg = vault.redeem(reward_amount, None)?;
+            let redeem_msg = vault.redeem(reward_amount, &vault_info.vault_token, None)?;
 
             // Create internal callback msg
             let callback_msg = InternalMsg::VaultTokensRedeemed {}.into_cosmos_msg(&env)?;

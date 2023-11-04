@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{to_binary, CosmosMsg, Env, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, CosmosMsg, Env, StdResult, Uint128, WasmMsg};
 use cw_ownable::{cw_ownable_execute, cw_ownable_query};
 
 use crate::{Config, ConfigUpdates, RewardType};
@@ -9,12 +9,28 @@ use crate::{Config, ConfigUpdates, RewardType};
 #[cw_serde]
 pub enum RewardInfo {
     /// The address of the vault if the reward token is a vault token
-    VaultAddr(String),
+    AstroportVault(AstroportVault),
     /// The address of the Astroport pool if the reward token is an Astroport LP
     /// token
-    AstroportPoolAddr(String),
+    AstroportPool(AstroportPool),
     /// The denom of the native coin if the reward token is a native coin
     NativeCoin(String),
+}
+
+#[cw_serde]
+pub struct AstroportPool {
+    /// The address of the Astroport pool
+    pub pool_addr: String,
+    /// The address of the Astroport liquidity manager
+    pub liquidity_manager_addr: String,
+}
+
+#[cw_serde]
+pub struct AstroportVault {
+    /// The address of the Astroport vault
+    pub vault_addr: String,
+    /// The address of the Astroport liquidity manager
+    pub liquidity_manager_addr: String,
 }
 
 #[cw_serde]
@@ -48,7 +64,7 @@ impl InternalMsg {
     pub fn into_cosmos_msg(&self, env: &Env) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
-            msg: to_binary(&ExecuteMsg::Internal(self.clone()))?,
+            msg: to_json_binary(&ExecuteMsg::Internal(self.clone()))?,
             funds: vec![],
         }))
     }

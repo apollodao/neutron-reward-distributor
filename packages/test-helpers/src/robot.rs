@@ -113,12 +113,26 @@ impl<'a> RewardDistributorRobot<'a> {
             );
 
         let reward_token_info = match &reward_type {
-            TestRewardType::VaultToken => {
-                RewardInfo::VaultAddr(reward_vault_robot.vault_addr.clone())
-            }
-            TestRewardType::LpToken => {
-                RewardInfo::AstroportPoolAddr(axl_ntrn_pool.pair_addr.to_string())
-            }
+            TestRewardType::VaultToken => RewardInfo::AstroportVault(
+                neutron_astroport_reward_distributor::msg::AstroportVault {
+                    vault_addr: reward_vault_robot.vault_addr().to_string(),
+                    liquidity_manager_addr: reward_vault_robot
+                        .astroport_contracts()
+                        .liquidity_manager
+                        .address
+                        .clone(),
+                },
+            ),
+            TestRewardType::LpToken => RewardInfo::AstroportPool(
+                neutron_astroport_reward_distributor::msg::AstroportPool {
+                    pool_addr: axl_ntrn_pool.pair_addr.to_string(),
+                    liquidity_manager_addr: reward_vault_robot
+                        .astroport_contracts()
+                        .liquidity_manager
+                        .address
+                        .clone(),
+                },
+            ),
             TestRewardType::NativeCoin(denom) => RewardInfo::NativeCoin(denom.clone()),
         };
 
